@@ -1,0 +1,78 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0e111b;
+  color: #fff;
+}
+
+#game {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #4fc3f7;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #aaa;
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  background: #1b1f3a;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.panel {
+  margin-top: 15px;
+  background: #1b1f3a;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  color: #81d4fa;
+}
+
+button {
+  background: linear-gradient(135deg, #4fc3f7, #0288d1);
+  border: none;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+#eventBox {
+  margin-top: 20px;
+  padding: 15px;
+  background: #263238;
+  border-radius: 10px;
+  display: none;
+}
+
+.achievement {
+  color: #ffd54f;
+  font-weight: bold;
+}
