@@ -12,6 +12,7 @@
 <h1>🛒 Retail Empire</h1>
 <p class="sub">Führe deinen eigenen Laden!</p>
 
+<!-- Stats -->
 <div class="stats">
   <div>💰 Geld: <span id="money">0</span>€</div>
   <div>⭐ Ruf: <span id="reputation">0</span></div>
@@ -20,6 +21,7 @@
   <div>👤 Mitarbeiter: <span id="staffCount">0</span></div>
 </div>
 
+<!-- Öffnungszeiten -->
 <div class="panel">
 <h2>⏰ Öffnungszeiten</h2>
 <div class="flex-buttons">
@@ -31,27 +33,44 @@
 <p>Aktuell: <span id="openHours">8</span>h</p>
 </div>
 
+<!-- Produkte -->
 <div class="panel">
 <h2>Produkte</h2>
 <div id="productList"></div>
 </div>
 
+<!-- Lieferanten / Einkauf -->
 <div class="panel">
 <h2>Einkauf / Lieferanten</h2>
+<label>
+<input type="checkbox" id="autoOrderToggle" onchange="toggleAutoOrder(this.checked)">
+Automatisch nachbestellen (nur bei Bestand 0)
+</label>
+<div>
+Bestellmenge:
+<button onclick="setOrderAmount(1)">1</button>
+<button onclick="setOrderAmount(2)">2</button>
+<button onclick="setOrderAmount(5)">5</button>
+<button onclick="setOrderAmount(10)">10</button>
+<span id="orderAmountDisplay">5</span>
+</div>
 <div id="supplierList"></div>
 </div>
 
+<!-- Mitarbeiter -->
 <div class="panel">
 <h2>Mitarbeiter</h2>
 <button onclick="hireStaff()">Mitarbeiter einstellen (300€)</button>
 <div id="staffList"></div>
 </div>
 
+<!-- Events -->
 <div class="panel">
 <h2>Events</h2>
 <div id="eventBox"></div>
 </div>
 
+<!-- Log -->
 <div class="panel">
 <h2>Log</h2>
 <div id="log"></div>
