@@ -1,270 +1,296 @@
-document.addEventListener("DOMContentLoaded", ()=>{
+// --- Speichern in localStorage ---
+function saveGame() {
+    localStorage.setItem("retailEmpireGame", JSON.stringify(game));
+}
 
-// ================= GAME STATE =================
-let game={
-money:1000,
-reputation:40,
-satisfaction:60,
-customers:15,
-staff:0,
-openHours:8,
-day:1,
-log:[],
-autoReorder:false,
-orderAmount:5,
-alerts:[],
+// --- Laden aus localStorage ---
+function loadGame() {
+    const data = localStorage.getItem("retailEmpireGame");
+    if(data){
+        const saved = JSON.parse(data);
+        Object.keys(saved).forEach(k => {
+            if(game.hasOwnProperty(k)) game[k] = saved[k];
+        });
+    }
+}
 
-products:[
-{id:1,name:"Brot",buy:1,sell:2,stock:20,unlock:0},
-{id:2,name:"Wasser",buy:0.5,sell:1.5,stock:20,unlock:0},
-{id:3,name:"Apfel",buy:0.8,sell:2,stock:10,unlock:0},
-{id:4,name:"Kaffee",buy:3,sell:6,stock:0,unlock:50},
-{id:5,name:"Sandwich",buy:4,sell:9,stock:0,unlock:60},
-{id:6,name:"Kleidung",buy:10,sell:25,stock:0,unlock:80},
-{id:7,name:"Elektronik",buy:50,sell:120,stock:0,unlock:120}
-],
+document.addEventListener("DOMContentLoaded",()=>{
 
-suppliers:[
-{id:1,name:"Standard Lieferant",fee:0},
-{id:2,name:"Premium Lieferant",fee:50}
-],
-
-competitors:[
-{name:"Laden A",factor:1.0},
-{name:"Laden B",factor:0.9}
-]
-};
-
-// Shortcut
 const el=id=>document.getElementById(id);
 
-// ================= UI =================
+let game={
+ money:1000,
+ reputation:40,
+ satisfaction:60,
+ customers:15,
+ staff:[],
+ openHours:8,
+ taxRate:19,
+ autoReorder:false,
+ orderAmount:10,
+ reorderThreshold:10,
+ income:0,
+ expenses:0,
+ alerts:[],
+ log:[],
+
+ products:[
+  {id:1,name:"Brot",buy:1,sell:2,stock:30,unlock:0,level:1,discount:false},
+  {id:2,name:"Wasser",buy:0.5,sell:1.5,stock:40,unlock:0,level:1,discount:false},
+  {id:3,name:"Apfel",buy:0.8,sell:2,stock:20,unlock:0,level:1,discount:false},
+  {id:4,name:"Kaffee",buy:3,sell:6,stock:0,unlock:50,level:1,discount:false},
+  {id:5,name:"Sandwich",buy:4,sell:9,stock:0,unlock:60,level:1,discount:false},
+  {id:6,name:"Kleidung",buy:12,sell:29,stock:0,unlock:80,level:1,discount:false},
+  {id:7,name:"Elektronik",buy:60,sell:139,stock:0,unlock:110,level:1,discount:false},
+  {id:8,name:"Smartphone",buy:180,sell:349,stock:0,unlock:130,level:1,discount:false},
+  {id:9,name:"Laptop",buy:450,sell:899,stock:0,unlock:150,level:1,discount:false}
+ ]
+};
+
+// --- Lade Spielstand ---
+loadGame();
+
+// ---------- PREIS LOGIK ----------
+function getPriceState(p){
+ let fair=p.buy*(2+(p.level-1)*0.25);
+ if(p.sell<=fair*1.1) return "green";
+ if(p.sell<=fair*1.4) return "yellow";
+ return "red";
+}
+
+// ---------- UI ----------
 function ui(){
-el("money").textContent=Math.floor(game.money);
-el("reputation").textContent=Math.floor(game.reputation);
-el("satisfaction").textContent=Math.floor(game.satisfaction);
-el("customers").textContent=Math.floor(game.customers);
-el("staffCount").textContent=game.staff;
-el("openHours").textContent=game.openHours;
+    el("money").textContent=Math.floor(game.money);
+    el("reputation").textContent=Math.floor(game.reputation);
+    el("satisfaction").textContent=Math.floor(game.satisfaction);
+    el("customers").textContent=Math.floor(game.customers);
+    el("staffCount").textContent=game.staff.length;
+    el("openHours").textContent=game.openHours;
+    el("income").textContent=Math.floor(game.income);
+    el("expenses").textContent=Math.floor(game.expenses);
+    el("profit").textContent=Math.floor(game.income-game.expenses);
+    el("taxRate").textContent=game.taxRate;
+    el("dashStock").textContent=game.products.reduce((s,p)=>s+p.stock,0);
+    renderProducts();
+    renderStaff();
+    renderLog();
+    renderAlerts();
 
-renderProducts();
-renderSuppliers();
-renderStaff();
-renderLog();
-updateDashboard();
-renderAlerts();
+    saveGame(); // speichert alles automatisch
 }
 
-// ================= PRODUCTS =================
+// ---------- PRODUKTE ----------
 function renderProducts(){
-const box=el("productList");
-box.innerHTML="";
-game.products.forEach(p=>{
-if(game.reputation<p.unlock) return;
-let state=getPriceState(p);
-let color=state=="green"?"price-green":state=="yellow"?"price-yellow":"price-red";
-let div=document.createElement("div");
-div.className="product";
-div.innerHTML=`
-<b>${p.name}</b> | Bestand: ${p.stock}<br>
-Einkauf: ${p.buy}€ | Verkauf:
-<input type="number" value="${p.sell}" style="width:60px"
- onchange="setPrice(${p.id},this.value)">
-<span class="${color}">●</span>
-`;
-box.appendChild(div);
-});
+ const box=el("productList");
+ box.innerHTML="";
+ game.products.forEach(p=>{
+  if(game.reputation<p.unlock) return;
+  let state=getPriceState(p);
+  let color=state==="green"?"price-green":state==="yellow"?"price-yellow":"price-red";
+  let label=state==="green"?"Günstig":state==="yellow"?"Teuer":"Abzocke";
+  let div=document.createElement("div");
+  div.className="product";
+  div.innerHTML=`
+   <b>${p.name}</b> | Lager: ${p.stock}<br>
+   Level ${p.level} | Einkauf: ${p.buy}€ | Verkauf:
+   <input type="number" value="${p.sell}" step="0.1"
+    onchange="setPrice(${p.id},this.value)">
+   <span class="${color}">● ${label}</span><br>
+   <label>
+    <input type="checkbox" ${p.discount?"checked":""}
+     onchange="toggleDiscount(${p.id},this.checked)">
+    Rabatt
+   </label>
+   <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*150}€)</button>
+  `;
+  box.appendChild(div);
+ });
 }
 
-function setPrice(id,val){
-let p=game.products.find(x=>x.id==id);
-p.sell=parseFloat(val);
+window.setPrice=(id,val)=>{
+ let p=game.products.find(x=>x.id===id);
+ p.sell=parseFloat(val);
+ ui();
+};
+
+window.toggleDiscount=(id,state)=>{
+ let p=game.products.find(x=>x.id===id);
+ p.discount=state;
+ log(`🏷 Rabatt ${state?"aktiv":"aus"}: ${p.name}`);
+ ui();
+};
+
+window.upgradeProduct=(id)=>{
+ let p=game.products.find(x=>x.id===id);
+ let cost=150*p.level;
+ if(game.money<cost) return log("❌ Nicht genug Geld");
+ game.money-=cost;
+ p.level++;
+ log(`📦 ${p.name} verbessert`);
+ ui();
+};
+
+// ---------- EINKAUF ----------
+window.toggleAutoOrder = function(state){
+    game.autoReorder = state;
+    log(`📦 Automatische Nachbestellung ${state ? "aktiv" : "deaktiv"}`);
+    ui();
+};
+
+window.setReorderThreshold = function(val){
+    game.reorderThreshold = val;
+    el("reorderThresholdDisplay").textContent = val;
+    ui();
+};
+
+window.setOrderAmount = function(val){
+    game.orderAmount = val;
+    el("orderAmountDisplay").textContent = val;
+    ui();
+};
+
+function autoOrder(){
+    if(!game.autoReorder) return;
+
+    game.products.forEach(p=>{
+        if(game.reputation < p.unlock) return;
+        if(p.stock >= game.reorderThreshold) return;
+
+        let cost = p.buy * game.orderAmount;
+        if(game.money >= cost){
+            p.stock += game.orderAmount;
+            game.money -= cost;
+            game.expenses += cost;
+            log(`📦 ${p.name} automatisch nachbestellt (${game.orderAmount} Stück)`);
+        } else {
+            log(`❌ Nicht genug Geld für ${p.name}`);
+        }
+    });
 }
 
-// ================= SUPPLIERS =================
-function renderSuppliers(){
-const box=el("supplierList");
-box.innerHTML="";
-game.suppliers.forEach(s=>{
-let div=document.createElement("div");
-div.className="product";
-div.innerHTML=`
-<b>${s.name}</b>
-<button onclick="manualOrder(${s.id})">Manuell bestellen</button>
-`;
-box.appendChild(div);
-});
-}
+// ---------- MITARBEITER ----------
+window.hireStaff=()=>{
+ if(game.money<300) return log("❌ Zu wenig Geld");
+ game.money-=300;
+ game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
+ log("👤 Mitarbeiter eingestellt");
+ ui();
+};
 
-// ================= AUTO ORDER =================
-function toggleAutoOrder(state){
-game.autoReorder=state;
-log(`📦 Automatische Nachbestellung ${state?"aktiv":"deaktiviert"}`);
-}
-
-function setOrderAmount(amount){
-game.orderAmount=amount;
-el("orderAmountDisplay").textContent=amount;
-log(`📦 Bestellmenge auf ${amount} gesetzt`);
-}
-
-function manualOrder(supplierId){
-let supplier=game.suppliers.find(x=>x.id==supplierId);
-let totalCost=0;
-game.products.forEach(p=>{
-if(game.reputation<p.unlock) return;
-let amount=game.orderAmount;
-p.stock+=amount;
-totalCost+=p.buy*amount;
-log(`📦 ${amount}x ${p.name} manuell nachbestellt`);
-});
-totalCost+=supplier.fee;
-if(totalCost>game.money){log("❌ Nicht genug Geld"); return;}
-game.money-=totalCost;
-ui();
-}
-
-function autoOrderCheck(){
-if(!game.autoReorder) return;
-game.suppliers.forEach(s=>{
-let totalCost=0;
-game.products.forEach(p=>{
-if(game.reputation<p.unlock) return;
-if(p.stock>0) return;
-let amount=game.orderAmount;
-p.stock+=amount;
-totalCost+=p.buy*amount;
-log(`📦 ${amount}x ${p.name} automatisch nachbestellt`);
-});
-totalCost+=s.fee;
-if(totalCost>game.money){log("❌ Nicht genug Geld"); return;}
-game.money-=totalCost;
-});
-}
-
-// ================= STAFF =================
-function hireStaff(){
-if(game.money<300){log("❌ Nicht genug Geld");return;}
-game.money-=300;
-game.staff++;
-game.customers+=3;
-game.satisfaction+=2;
-log("👤 Mitarbeiter eingestellt");
-ui();
-}
+window.upgradeStaff=id=>{
+ let s=game.staff.find(x=>x.id===id);
+ let cost=200*s.level;
+ if(game.money<cost) return log("❌ Nicht genug Geld");
+ game.money-=cost;
+ s.level++; s.service++; s.sales++; s.logistics++;
+ log(`📚 Mitarbeiter verbessert (Level ${s.level})`);
+ ui();
+};
 
 function renderStaff(){
-el("staffList").textContent=`Anzahl Mitarbeiter: ${game.staff}`;
+ const box=el("staffList");
+ box.innerHTML="";
+ if(game.staff.length===0){
+    box.textContent="Keine Mitarbeiter angestellt";
+    return;
+ }
+ game.staff.forEach(s=>{
+  let daily=80+s.level*20;
+  let div=document.createElement("div");
+  div.className="product";
+  div.innerHTML=`
+   <b>Mitarbeiter</b> | Level ${s.level}<br>
+   🛎 Service: ${s.service} | 💰 Verkauf: ${s.sales} | 📦 Logistik: ${s.logistics}<br>
+   💸 Lohn/Tag: ${daily}€<br>
+   <button onclick="upgradeStaff(${s.id})">Upgrade (${200*s.level}€)</button>
+  `;
+  box.appendChild(div);
+ });
 }
 
-// ================= PRICE LOGIC =================
-function getPriceState(p){
-let fair=p.buy*2;
-if(p.sell<=fair*1.1) return "green";
-if(p.sell<=fair*1.5) return "yellow";
-return "red";
-}
-
-// ================= AUTO SALES =================
+// ---------- VERKAUF ----------
 function autoSell(){
-let totalSold=0;
-game.products.forEach(p=>{
-if(p.stock<=0 || game.reputation<p.unlock) return;
-let state=getPriceState(p);
-let demand = game.customers * (game.openHours/8);
-demand *= getCompetitorFactor();
-if(state=="yellow") demand*=0.8;
-if(state=="red") demand*=0.5;
-let sold=Math.min(p.stock,Math.floor(demand/10));
-if(sold<=0) return;
-p.stock-=sold;
-let income=sold*p.sell;
-game.money+=income;
-totalSold+=sold;
-if(state=="red"){
-game.reputation-=0.3;
-game.satisfaction-=0.5;
-game.alerts.push("⚠️ Kunden beschweren sich über hohe Preise!");
-if(Math.random()<0.15){game.money-=500;game.alerts.push("⚖️ Abmahnung – 500€ Strafe");}
-}
-if(state=="green"){
-game.reputation+=0.1;
-game.satisfaction+=0.1;
-}
-});
-if(totalSold>0) log(`🛒 Kunden kauften ${totalSold} Artikel`);
+ let sold=0;
+ game.products.forEach(p=>{
+  if(p.stock<=0 || game.reputation<p.unlock) return;
+  let state=getPriceState(p);
+
+  let demand=game.customers*(game.openHours/8);
+  if(state==="yellow") demand*=0.7;
+  if(state==="red") demand*=p.discount?0.25:0;
+  if(p.discount) demand*=1.5;
+
+  let soldAmount=Math.min(p.stock,Math.floor(demand/10));
+  if(soldAmount<=0) return;
+  p.stock-=soldAmount;
+  game.income+=soldAmount*p.sell*(p.discount?0.85:1);
+  sold+=soldAmount;
+ });
+ if(sold>0) log(`🛒 ${sold} Artikel verkauft`);
 }
 
-// ================= KI Logik =================
-function getCompetitorFactor(){
-let factor=1.0;
-game.competitors.forEach(c=>{
-if(Math.random()<0.3) factor *= c.factor;
-});
-return factor;
-}
-
-// ================= EVENTS =================
+// ---------- EVENTS ----------
 function randomEvent(){
-if(Math.random()>0.3) return;
-let events=[
-{text:"🤝 Lieferant bietet billige Ware",yes:g=>{g.money+=300;g.reputation-=4;log("Deal angenommen – Ruf leidet")},no:g=>{log("Deal abgelehnt")}},
-{text:"📰 Influencer Werbung",yes:g=>{g.money-=200;g.reputation+=5;log("Werbung gebucht")},no:g=>{log("Werbung abgelehnt")}},
-{text:"⚖️ Kontrolle prüft Preise",yes:g=>{g.money-=300;g.reputation+=1;log("Strafe bezahlt")},no:g=>{g.reputation-=6;log("Abmahnung erhalten")}},
-{text:"📦 Trendprodukt boomt",yes:g=>{g.customers+=5;log("Mehr Kunden durch Trend")},no:g=>{log("Trend ignoriert")}}
-];
-let e=events[Math.floor(Math.random()*events.length)];
-let box=el("eventBox");
-box.innerHTML=`<p>${e.text}</p>
-<button id="evYes">Annehmen</button>
-<button id="evNo">Ablehnen</button>`;
-document.getElementById("evYes").onclick=()=>{e.yes(game);box.innerHTML="";ui();};
-document.getElementById("evNo").onclick=()=>{e.no(game);box.innerHTML="";ui();};
+ if(Math.random()>0.3) return;
+ let e=[
+  {t:"📺 Influencer Werbung (200€)", yes:g=>{g.money-=200;g.reputation+=6}, no:g=>{g.reputation-=2}},
+  {t:"⚠️ Billiger Lieferant – Qualität sinkt", yes:g=>{g.money+=300;g.reputation-=5}, no:g=>{g.reputation+=1}}
+ ];
+ let ev=e[Math.floor(Math.random()*e.length)];
+ let box=el("eventBox");
+ box.innerHTML=`
+ <p>${ev.t}</p>
+ <button id="y">Annehmen</button>
+ <button id="n">Ablehnen</button>`;
+ document.getElementById("y").onclick=()=>{ev.yes(game); box.innerHTML=""; ui();};
+ document.getElementById("n").onclick=()=>{ev.no(game); box.innerHTML=""; ui();};
 }
 
-// ================= LOG =================
-function log(t){game.log.unshift("• "+t);if(game.log.length>25) game.log.pop();}
+// ---------- LOG ----------
+function log(t){
+ game.log.unshift("• "+t);
+ if(game.log.length>30) game.log.pop();
+}
 function renderLog(){el("log").innerHTML=game.log.join("<br>");}
 
-// ================= DASHBOARD =================
-function updateDashboard(){
-el("dashMoney").textContent=Math.floor(game.money);
-el("dashReputation").textContent=Math.floor(game.reputation);
-el("dashSatisfaction").textContent=Math.floor(game.satisfaction);
-el("dashCustomers").textContent=Math.floor(game.customers);
-let totalStock=game.products.reduce((sum,p)=>sum+p.stock,0);
-el("dashStock").textContent=totalStock;
-let top=game.products.filter(p=>game.reputation>=p.unlock).sort((a,b)=>(b.sell*b.stock)-(a.sell*a.stock))[0];
-el("dashTopProduct").textContent=top?`${top.name} (${top.stock})`:"-";
-}
-
-// ================= ALERTS =================
+// ---------- ALERTS ----------
 function renderAlerts(){
-const box=el("alerts");
-box.innerHTML="";
-game.alerts.forEach(a=>{let p=document.createElement("p");p.textContent=a;box.appendChild(p);});
-game.alerts=[];
+ const b=el("alerts"); b.innerHTML="";
+ game.alerts.forEach(a=>{
+  let p=document.createElement("p");
+  p.textContent=a;
+  b.appendChild(p);
+ });
+ game.alerts=[];
 }
 
-// ================= DAILY TICK =================
+// ---------- TAG ----------
 function nextDay(){
-game.day++;
-let staffBonus=1+game.staff*0.1;
-let repBonus=1+(game.reputation-50)/200;
-let satisBonus=1+(game.satisfaction-50)/200;
-game.customers=Math.max(3,Math.floor(15*staffBonus*repBonus*satisBonus));
-autoOrderCheck();
-autoSell();
-randomEvent();
-game.reputation=Math.max(0,Math.min(150,game.reputation));
-game.satisfaction=Math.max(0,Math.min(100,game.satisfaction));
-ui();
+ game.income=0;
+ game.expenses=0;
+
+ let totalStock=game.products.reduce((s,p)=>s+p.stock,0);
+ if(totalStock<30){
+  game.customers=Math.floor(game.customers*0.7);
+  game.alerts.push("📦 Leere Regale – Kunden bleiben weg");
+ }
+
+ autoOrder();
+ autoSell();
+
+ let staffCost=game.staff.reduce((s,x)=>s+(80+x.level*20),0);
+ let tax=(game.income*game.taxRate)/100;
+ game.expenses+=staffCost+tax;
+ game.money+=game.income-game.expenses;
+
+ game.customers=Math.max(5,Math.floor(15+(game.reputation/4)));
+
+ randomEvent();
+ ui();
 }
 
-// ================= LOOP =================
+// ---------- START ----------
 setInterval(nextDay,4000);
-
-// ================= START =================
 ui();
 
-}); // DOMContentLoaded
+});
