@@ -1,44 +1,57 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Markt Tycoon</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Retail Empire – Markt Tycoon</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>🏪 Markt Tycoon</header>
-
 <div id="game">
+<h1>🛒 Retail Empire</h1>
+<p class="sub">Vom kleinen Laden zum Handelsimperium</p>
 
-  <div class="panel">
-    <h2>Status</h2>
-    <div id="stats"></div>
-    <button id="nextDayBtn">Nächster Tag</button>
+<div class="stats">
+  <div>💰 Geld: <span id="money">1000</span>€</div>
+  <div>⭐ Ruf: <span id="reputation">50</span></div>
+  <div>😊 Zufriedenheit: <span id="satisfaction">60</span>%</div>
+  <div>👥 Kunden/Tag: <span id="customers">10</span></div>
+  <div>📦 Lagerplätze: <span id="storage">50</span></div>
+</div>
 
-    <h2>Upgrades</h2>
-    <div id="upgrades"></div>
-  </div>
+<div class="panel">
+<h2>Produkte verkaufen</h2>
+<div id="productList"></div>
+</div>
 
-  <div class="panel">
-    <h2>Produkte</h2>
-    <div id="products"></div>
+<div class="panel">
+<h2>Einkauf</h2>
+<div id="supplierList"></div>
+</div>
 
-    <h2>Filialen</h2>
-    <div id="branches"></div>
-  </div>
+<div class="panel">
+<h2>Mitarbeiter</h2>
+<button id="hireStaffBtn">Mitarbeiter einstellen (300€)</button>
+<div>Anzahl: <span id="staffCount">0</span></div>
+</div>
 
-  <div class="panel">
-    <h2>Mitarbeiter</h2>
-    <div id="staff"></div>
-    <button id="hireBtn">Mitarbeiter einstellen</button>
+<div class="panel">
+<h2>Ruf & Preise</h2>
+<div id="priceWarnings"></div>
+</div>
 
-    <h2>Events</h2>
-    <div id="events"></div>
-  </div>
+<div class="panel">
+<h2>Events</h2>
+<div id="eventBox"></div>
+</div>
+
+<div class="panel">
+<h2>Log</h2>
+<div id="log"></div>
+</div>
 
 </div>
 
-<script src="game.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
