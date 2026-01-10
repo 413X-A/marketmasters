@@ -2,42 +2,49 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Retail Empire – Markt Tycoon</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retail Empire</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="game">
 <h1>🛒 Retail Empire</h1>
-<p class="sub">Vom kleinen Laden zum Handelsimperium</p>
+<p class="sub">Führe deinen eigenen Laden!</p>
 
 <div class="stats">
-  <div>💰 Geld: <span id="money">1000</span>€</div>
-  <div>⭐ Ruf: <span id="reputation">50</span></div>
-  <div>😊 Zufriedenheit: <span id="satisfaction">60</span>%</div>
-  <div>👥 Kunden/Tag: <span id="customers">10</span></div>
-  <div>📦 Lagerplätze: <span id="storage">50</span></div>
+  <div>💰 Geld: <span id="money">0</span>€</div>
+  <div>⭐ Ruf: <span id="reputation">0</span></div>
+  <div>😊 Zufriedenheit: <span id="satisfaction">0</span>%</div>
+  <div>👥 Kunden/Tag: <span id="customers">0</span></div>
+  <div>👤 Mitarbeiter: <span id="staffCount">0</span></div>
 </div>
 
 <div class="panel">
-<h2>Produkte verkaufen</h2>
+<h2>⏰ Öffnungszeiten</h2>
+<div class="flex-buttons">
+<button onclick="setOpen(6)">6h</button>
+<button onclick="setOpen(8)">8h</button>
+<button onclick="setOpen(10)">10h</button>
+<button onclick="setOpen(12)">12h</button>
+</div>
+<p>Aktuell: <span id="openHours">8</span>h</p>
+</div>
+
+<div class="panel">
+<h2>Produkte</h2>
 <div id="productList"></div>
 </div>
 
 <div class="panel">
-<h2>Einkauf</h2>
+<h2>Einkauf / Lieferanten</h2>
 <div id="supplierList"></div>
 </div>
 
 <div class="panel">
 <h2>Mitarbeiter</h2>
-<button id="hireStaffBtn">Mitarbeiter einstellen (300€)</button>
-<div>Anzahl: <span id="staffCount">0</span></div>
-</div>
-
-<div class="panel">
-<h2>Ruf & Preise</h2>
-<div id="priceWarnings"></div>
+<button onclick="hireStaff()">Mitarbeiter einstellen (300€)</button>
+<div id="staffList"></div>
 </div>
 
 <div class="panel">
