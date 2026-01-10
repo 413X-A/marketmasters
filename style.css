@@ -1,48 +1,56 @@
 body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:#111;
-  color:#eee;
-}
-
-header{
-  background:#222;
-  padding:12px;
-  text-align:center;
-  font-size:22px;
-  font-weight:bold;
+margin:0;
+font-family:Arial, sans-serif;
+background:#10151c;
+color:#fff;
 }
 
 #game{
-  display:flex;
+max-width:1100px;
+margin:auto;
+padding:20px;
+}
+
+h1{text-align:center;color:#4fc3f7}
+.sub{text-align:center;color:#aaa}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+background:#1a2233;
+padding:12px;
+border-radius:10px;
 }
 
 .panel{
-  width:33%;
-  padding:10px;
-  border-right:1px solid #333;
+margin-top:15px;
+background:#1a2233;
+padding:15px;
+border-radius:10px;
 }
 
-h2{margin-top:0}
-
-.box{
-  background:#1c1c1c;
-  padding:8px;
-  margin:6px 0;
-  border-radius:4px;
-}
+.panel h2{margin-top:0;color:#81d4fa}
 
 button{
-  background:#333;
-  color:#fff;
-  border:1px solid #555;
-  padding:5px 8px;
-  cursor:pointer;
+background:#4fc3f7;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+margin:2px;
 }
-button:hover{background:#444}
 
-.green{color:#4caf50}
-.yellow{color:#ff9800}
-.red{color:#f44336}
+button:hover{opacity:.85}
 
-input{width:60px}
+.product{
+border-bottom:1px solid #333;
+padding:6px 0;
+}
+
+.price-green{color:#4caf50}
+.price-yellow{color:#ffeb3b}
+.price-red{color:#f44336}
+
+#log{font-size:12px;color:#ccc;max-height:140px;overflow:auto}
