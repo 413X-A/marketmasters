@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retail Empire KI</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game">
+<h1>🛒 Retail Empire KI</h1>
+<p class="sub">Führe deinen eigenen Laden mit smarter KI!</p>
+
+<!-- Dashboard -->
+<div class="panel" id="dashboard">
+<h2>📊 Übersicht</h2>
+<div id="dashStats">
+  <p>💰 Geld: <span id="dashMoney">0</span>€</p>
+  <p>⭐ Ruf: <span id="dashReputation">0</span></p>
+  <p>😊 Zufriedenheit: <span id="dashSatisfaction">0</span>%</p>
+  <p>👥 Kunden/Tag: <span id="dashCustomers">0</span></p>
+  <p>📦 Lager gesamt: <span id="dashStock">0</span></p>
+  <p>🥇 Top-Produkt: <span id="dashTopProduct">-</span></p>
+</div>
+<div id="alerts"></div>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div>💰 Geld: <span id="money">0</span>€</div>
+  <div>⭐ Ruf: <span id="reputation">0</span></div>
+  <div>😊 Zufriedenheit: <span id="satisfaction">0</span>%</div>
+  <div>👥 Kunden/Tag: <span id="customers">0</span></div>
+  <div>👤 Mitarbeiter: <span id="staffCount">0</span></div>
+</div>
+
+<!-- Öffnungszeiten -->
+<div class="panel">
+<h2>⏰ Öffnungszeiten</h2>
+<div class="flex-buttons">
+<button onclick="setOpen(6)">6h</button>
+<button onclick="setOpen(8)">8h</button>
+<button onclick="setOpen(10)">10h</button>
+<button onclick="setOpen(12)">12h</button>
+</div>
+<p>Aktuell: <span id="openHours">8</span>h</p>
+</div>
+
+<!-- Produkte -->
+<div class="panel">
+<h2>Produkte</h2>
+<div id="productList"></div>
+</div>
+
+<!-- Lieferanten / Einkauf -->
+<div class="panel">
+<h2>Einkauf / Lieferanten</h2>
+<label>
+<input type="checkbox" id="autoOrderToggle" onchange="toggleAutoOrder(this.checked)">
+Automatisch nachbestellen (nur bei Bestand 0)
+</label>
+<div>
+Bestellmenge:
+<button onclick="setOrderAmount(1)">1</button>
+<button onclick="setOrderAmount(2)">2</button>
+<button onclick="setOrderAmount(5)">5</button>
+<button onclick="setOrderAmount(10)">10</button>
+<span id="orderAmountDisplay">5</span>
+</div>
+<div id="supplierList"></div>
+</div>
+
+<!-- Mitarbeiter -->
+<div class="panel">
+<h2>Mitarbeiter</h2>
+<button onclick="hireStaff()">Mitarbeiter einstellen (300€)</button>
+<div id="staffList"></div>
+</div>
+
+<!-- Events -->
+<div class="panel">
+<h2>Events</h2>
+<div id="eventBox"></div>
+</div>
+
+<!-- Log -->
+<div class="panel">
+<h2>Log</h2>
+<div id="log"></div>
+</div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
