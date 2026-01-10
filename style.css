@@ -74,3 +74,14 @@ color:#ccc;
 max-height:140px;
 overflow:auto;
 }
+
+#dashboard p{
+margin:4px 0;
+font-size:0.9em;
+}
+
+#alerts p{
+color:#ff9800;
+margin:2px 0;
+font-size:0.85em;
+}
