@@ -12,7 +12,8 @@
   <h1>🏪 Retail Empire</h1>
   <div class="stats">
     <span>Tag <b id="day">1</b></span>
-    <span>💰 <b id="money">0</b>€</span>
+    <span>🕒 <b id="clock">08:00</b></span>
+    <span>💰 <b id="money">0</b></span>
     <span>⭐ Ruf <b id="reputation">0</b></span>
     <span>📈 XP <b id="xp">0</b></span>
     <span>👥 Kunden <b id="customers">0</b></span>
@@ -48,7 +49,7 @@ Bestellmenge:
 
 <section class="card">
 <h2>Mitarbeiter</h2>
-<button id="hireBtn">Mitarbeiter einstellen (nur XP)</button>
+<button id="hireBtn">Mitarbeiter einstellen (100 €)</button>
 <div id="staffList"></div>
 </section>
 
@@ -59,12 +60,21 @@ Bestellmenge:
 
 <section class="card">
 <h2>Finanzen</h2>
-<div>Einnahmen: <b id="income">0</b>€</div>
-<div>Ausgaben: <b id="expenses">0</b>€</div>
-<div>Bilanz: <b id="profit">0</b>€</div>
+<div>Einnahmen: <b id="income">0</b></div>
+<div>Ausgaben: <b id="expenses">0</b></div>
+<div>Bilanz: <b id="profit">0</b></div>
 </section>
 
 </main>
+
+<!-- Tages Overlay -->
+<div id="dayOverlay" class="overlay hidden">
+ <div class="overlay-card">
+  <h2>📊 Tagesabschluss</h2>
+  <div id="daySummary"></div>
+  <button id="nextDayBtn">Nächster Tag</button>
+ </div>
+</div>
 
 <script src="script.js"></script>
 </body>
