@@ -72,7 +72,7 @@ loadGame();
 function ui(){
  el("day").textContent=game.day;
  el("money").textContent=formatMoney(Math.floor(game.money*100)/100);
- el("reputation").textContent=Math.floor(game.reputation);
+ el("reputation").textContent=Math.max(0,Math.floor(game.reputation));
  el("xp").textContent=Math.floor(game.xp);
  el("customers").textContent=Math.floor(game.customers);
  el("autoOrder").checked=game.autoOrder;
@@ -205,7 +205,7 @@ function fireStaff(id){
 function calculateCustomers(){
  let base = Math.max(1,Math.floor(game.reputation/5));
  let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0 && p.selling).length;
- if(availableProducts===0) game.reputation-=0.5;
+ if(availableProducts===0) game.reputation=Math.max(0,game.reputation-0.5);
  let dayBoost = Math.min(game.day*0.1,base*2);
  let discountBoost = game.products.reduce((s,p)=>s+p.discount,0)/50;
  let staffBoost = game.staff.reduce((s,sf)=>s+sf.service*0.05,0);
@@ -230,6 +230,7 @@ function autoSell(){
    game.income+=revenue;
    game.xp+=demand*p.level;
    game.reputation+=0.01*demand;
+   game.reputation=Math.max(0,game.reputation);
    game.report.push(`🛒 ${p.name}: ${demand} verkauft (${formatMoney(revenue)})`);
    animateProduct(p.id);
   });
@@ -271,7 +272,7 @@ function nextDay(){
  let staffCost = game.staff.reduce((s,x)=>s+10+x.level*5,0);
  game.expenses+=staffCost;
  game.money+=game.income-game.expenses;
- if(game.products.filter(p=>p.unlocked && p.stock>0).length===0) game.reputation-=1;
+ if(game.products.filter(p=>p.unlocked && p.stock>0 && p.selling).length===0) game.reputation=Math.max(0,game.reputation-1);
  checkAchievements();
  ui();
 }
