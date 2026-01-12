@@ -13,8 +13,9 @@
   <div class="stats">
     <span>Tag <b id="day">1</b></span>
     <span>💰 <b id="money">0</b>€</span>
-    <span>⭐ <b id="reputation">0</b></span>
-    <span>👥 <b id="customers">0</b></span>
+    <span>⭐ Ruf <b id="reputation">0</b></span>
+    <span>📈 XP <b id="xp">0</b></span>
+    <span>👥 Kunden <b id="customers">0</b></span>
   </div>
 </header>
 
@@ -26,12 +27,8 @@
 </section>
 
 <section class="card">
-<h2>Lager & Lieferung</h2>
-<label>
-  <input type="checkbox" id="autoOrder">
-  Automatisch nachbestellen
-</label>
-<br>
+<h2>Lieferung</h2>
+<label><input type="checkbox" id="autoOrder"> Automatisch nachbestellen</label><br>
 Menge:
 <select id="orderAmount">
   <option>1</option>
@@ -48,10 +45,8 @@ Menge:
 </section>
 
 <section class="card">
-<h2>Finanzen</h2>
-<div>Einnahmen heute: <b id="income">0</b>€</div>
-<div>Ausgaben heute: <b id="expenses">0</b>€</div>
-<div>Gewinn: <b id="profit">0</b>€</div>
+<h2>Tagesbericht</h2>
+<div id="report"></div>
 </section>
 
 </main>
