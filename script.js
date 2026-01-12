@@ -105,55 +105,69 @@ function priceLabel(p){
  return "Abzocke";
 }
 
+// ---------------- PRODUKTE ----------------
 function renderProducts(){
- const box=el("productList");
- box.innerHTML="";
- game.products.forEach(p=>{
-  if(!p.unlocked) return; 
+  const box=el("productList");
+  box.innerHTML="";
 
-  let div=document.createElement("div");
-  div.className="product";
+  game.products.forEach(p=>{
+    if(!p.unlocked) return; // nur freigeschaltete Produkte zeigen
 
-  let c=priceState(p);
-  div.innerHTML=`
-   <b>${p.name}</b> | Lager ${p.stock}<br>
-   Level ${p.level} | EK ${p.buy} | VK: ${p.sell.toFixed(2)} €
-   <button onclick="adjustPrice(${p.id},-0.1)">-</button>
-   <button onclick="adjustPrice(${p.id},0.1)">+</button>
-   <span class="${c}">${priceLabel(p)}</span><br>
-   Rabatt: ${p.discount.toFixed(0)}%
-   <button onclick="adjustDiscount(${p.id},-1)">-</button>
-   <button onclick="adjustDiscount(${p.id},1)">+</button>
-   | <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
-   | <button onclick="toggleSelling(${p.id})">${p.selling ? "Stoppen" : "Starten"}</button>
-   <br>XP pro Verkauf: ${p.level}
-  `;
-  box.appendChild(div);
- });
+    let div=document.createElement("div");
+    div.className="product";
+
+    // Preisbewertung
+    let c = priceState(p);
+
+    div.innerHTML=`
+      <b>${p.name}</b> | Lager: ${p.stock}<br>
+      Level ${p.level} | EK ${p.buy} € | VK: <span id="price-${p.id}">${p.sell.toFixed(2)}</span> €
+      <button id="priceMinus-${p.id}">-</button>
+      <button id="pricePlus-${p.id}">+</button>
+      <span class="${c}" id="priceLabel-${p.id}">${priceLabel(p)}</span><br>
+
+      Rabatt: <span id="discount-${p.id}">${p.discount.toFixed(0)}</span>%
+      <button id="discountMinus-${p.id}">-</button>
+      <button id="discountPlus-${p.id}">+</button><br>
+
+      <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
+      <button onclick="toggleSelling(${p.id})">${p.selling ? "Stoppen" : "Starten"}</button>
+      <br>XP pro Verkauf: ${p.level}
+    `;
+
+    box.appendChild(div);
+
+    // ----------------- EVENT LISTENER -----------------
+    document.getElementById(`priceMinus-${p.id}`).onclick = () => adjustPrice(p.id,-0.1);
+    document.getElementById(`pricePlus-${p.id}`).onclick = () => adjustPrice(p.id,0.1);
+
+    document.getElementById(`discountMinus-${p.id}`).onclick = () => adjustDiscount(p.id,-1);
+    document.getElementById(`discountPlus-${p.id}`).onclick = () => adjustDiscount(p.id,1);
+  });
 }
 
-function adjustPrice(id,amount){
- let p = game.products.find(x=>x.id===id);
- p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10);
- ui();
+// ----------------- PREIS & RABATT ANPASSUNG -----------------
+window.adjustPrice = (id, amount) => {
+  let p = game.products.find(x=>x.id===id);
+  p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10); // +0.1 / -0.1
+  updateProductUI(p);
+  saveGame();
 }
 
-function adjustDiscount(id,amount){
- let p = game.products.find(x=>x.id===id);
- p.discount = Math.min(50,Math.max(0,p.discount+amount));
- ui();
+window.adjustDiscount = (id, amount) => {
+  let p = game.products.find(x=>x.id===id);
+  p.discount = Math.min(50, Math.max(0, p.discount+amount));
+  updateProductUI(p);
+  saveGame();
 }
 
-function upgradeProduct(id){
- let p = game.products.find(x=>x.id===id);
- let cost = p.level*10;
- if(game.xp<cost) return;
- game.xp -= cost;
- p.level++;
- p.sell = Math.round(p.sell*1.1*10)/10; 
- p.exp +=5;
- game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert!`);
- ui();
+// ----------------- PRODUKT UI AKTUALISIEREN -----------------
+function updateProductUI(p){
+  document.getElementById(`price-${p.id}`).textContent = p.sell.toFixed(2);
+  document.getElementById(`discount-${p.id}`).textContent = p.discount.toFixed(0);
+  let c = priceState(p);
+  document.getElementById(`priceLabel-${p.id}`).textContent = priceLabel(p);
+  document.getElementById(`priceLabel-${p.id}`).className = c;
 }
 
 window.toggleSelling=id=>{
