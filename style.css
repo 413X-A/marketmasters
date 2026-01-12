@@ -1,7 +1,6 @@
 :root{
  --bg:#0f172a;
  --card:#020617;
- --accent:#38bdf8;
  --good:#22c55e;
  --mid:#eab308;
  --bad:#ef4444;
@@ -26,6 +25,8 @@ header{
 
 .stats{
  display:flex;
+ flex-wrap:wrap;
+ gap:6px;
  justify-content:space-between;
  font-size:13px;
 }
