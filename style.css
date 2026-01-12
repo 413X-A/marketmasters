@@ -62,14 +62,7 @@ main{padding:10px}
 .price-yellow{color:var(--mid)}
 .price-red{color:var(--bad)}
 
-input[type=number]{
- width:70px;
- background:#020617;
- border:1px solid #334155;
- color:white;
- border-radius:6px;
- padding:2px 4px;
-}
+input[type=number]{width:70px;background:#020617;border:1px solid #334155;color:white;border-radius:6px;padding:2px 4px;}
 
 button{
  background:var(--highlight);
