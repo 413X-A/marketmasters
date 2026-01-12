@@ -105,30 +105,28 @@ function priceLabel(p){
  return "Abzocke";
 }
 
-// ---------------- PRODUKTE ----------------
 function renderProducts(){
-  const box=el("productList");
-  box.innerHTML="";
+  const box = el("productList");
+  box.innerHTML = "";
 
-  game.products.forEach(p=>{
-    if(!p.unlocked) return; // nur freigeschaltete Produkte zeigen
+  game.products.forEach(p => {
+    if(!p.unlocked) return; // nur freigeschaltete Produkte
 
-    let div=document.createElement("div");
-    div.className="product";
+    let div = document.createElement("div");
+    div.className = "product";
+    div.id = `product-${p.id}`; // eindeutige ID
 
-    // Preisbewertung
-    let c = priceState(p);
-
-    div.innerHTML=`
+    let stateClass = priceState(p);
+    div.innerHTML = `
       <b>${p.name}</b> | Lager: ${p.stock}<br>
-      Level ${p.level} | EK ${p.buy} € | VK: <span id="price-${p.id}">${p.sell.toFixed(2)}</span> €
-      <button id="priceMinus-${p.id}">-</button>
-      <button id="pricePlus-${p.id}">+</button>
-      <span class="${c}" id="priceLabel-${p.id}">${priceLabel(p)}</span><br>
+      Level ${p.level} | EK ${p.buy.toFixed(2)} € | VK: <span id="price-${p.id}">${p.sell.toFixed(2)}</span> €
+      <button class="price-btn" data-id="${p.id}" data-change="-0.1">-</button>
+      <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button>
+      <span class="${stateClass}" id="priceLabel-${p.id}">${priceLabel(p)}</span><br>
 
       Rabatt: <span id="discount-${p.id}">${p.discount.toFixed(0)}</span>%
-      <button id="discountMinus-${p.id}">-</button>
-      <button id="discountPlus-${p.id}">+</button><br>
+      <button class="discount-btn" data-id="${p.id}" data-change="-1">-</button>
+      <button class="discount-btn" data-id="${p.id}" data-change="1">+</button><br>
 
       <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
       <button onclick="toggleSelling(${p.id})">${p.selling ? "Stoppen" : "Starten"}</button>
@@ -136,41 +134,70 @@ function renderProducts(){
     `;
 
     box.appendChild(div);
+  });
 
-    // ----------------- EVENT LISTENER -----------------
-    document.getElementById(`priceMinus-${p.id}`).onclick = () => adjustPrice(p.id,-0.1);
-    document.getElementById(`pricePlus-${p.id}`).onclick = () => adjustPrice(p.id,0.1);
+  // Event Listener binden
+  document.querySelectorAll(".price-btn").forEach(btn=>{
+    btn.onclick = ()=>{
+      let id = parseInt(btn.dataset.id);
+      let change = parseFloat(btn.dataset.change);
+      adjustPrice(id, change);
+    }
+  });
 
-    document.getElementById(`discountMinus-${p.id}`).onclick = () => adjustDiscount(p.id,-1);
-    document.getElementById(`discountPlus-${p.id}`).onclick = () => adjustDiscount(p.id,1);
+  document.querySelectorAll(".discount-btn").forEach(btn=>{
+    btn.onclick = ()=>{
+      let id = parseInt(btn.dataset.id);
+      let change = parseFloat(btn.dataset.change);
+      adjustDiscount(id, change);
+    }
   });
 }
 
-// ----------------- PREIS & RABATT ANPASSUNG -----------------
+// ----------------- PREIS & RABATT -----------------
 window.adjustPrice = (id, amount) => {
-  let p = game.products.find(x=>x.id===id);
-  p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10); // +0.1 / -0.1
+  let p = game.products.find(x => x.id===id);
+  p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10);
   updateProductUI(p);
   saveGame();
 }
 
 window.adjustDiscount = (id, amount) => {
-  let p = game.products.find(x=>x.id===id);
+  let p = game.products.find(x => x.id===id);
   p.discount = Math.min(50, Math.max(0, p.discount+amount));
   updateProductUI(p);
   saveGame();
 }
 
-// ----------------- PRODUKT UI AKTUALISIEREN -----------------
+// ----------------- UI UPDATE -----------------
 function updateProductUI(p){
-  document.getElementById(`price-${p.id}`).textContent = p.sell.toFixed(2);
-  document.getElementById(`discount-${p.id}`).textContent = p.discount.toFixed(0);
-  let c = priceState(p);
-  document.getElementById(`priceLabel-${p.id}`).textContent = priceLabel(p);
-  document.getElementById(`priceLabel-${p.id}`).className = c;
+  let priceEl = document.getElementById(`price-${p.id}`);
+  let discountEl = document.getElementById(`discount-${p.id}`);
+  let labelEl = document.getElementById(`priceLabel-${p.id}`);
+
+  if(priceEl) priceEl.textContent = p.sell.toFixed(2);
+  if(discountEl) discountEl.textContent = p.discount.toFixed(0);
+  if(labelEl) {
+    labelEl.textContent = priceLabel(p);
+    labelEl.className = priceState(p);
+  }
 }
 
-window.toggleSelling=id=>{
+// ---------------- Upgrade Produkt -----------------
+function upgradeProduct(id){
+ let p = game.products.find(x=>x.id===id);
+ let cost = p.level*10;
+ if(game.xp<cost) return;
+ game.xp -= cost;
+ p.level++;
+ p.sell = Math.round(p.sell*1.1*10)/10; 
+ p.exp +=5;
+ game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert!`);
+ ui();
+}
+
+// ----------------- Toggle Verkauf -----------------
+window.toggleSelling = id=>{
  let p = game.products.find(x=>x.id===id);
  p.selling = !p.selling;
  ui();
@@ -216,7 +243,7 @@ window.fireStaff=id=>{
  ui();
 }
 
-// ---------------- KUNDEN ----------------
+// ----------------- Kunden -----------------
 function calculateCustomers(){
  let base = Math.max(1,Math.floor(game.reputation/5));
  let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0).length;
@@ -232,7 +259,7 @@ function calculateCustomers(){
  return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost) * availableProducts / Math.max(1, game.products.filter(p=>p.unlocked).length);
 }
 
-// ---------------- VERKAUF ----------------
+// ---------------- VERKAUF -----------------
 function autoSell(){
  game.customers = calculateCustomers();
  let budgets=[];
@@ -262,7 +289,7 @@ function autoSell(){
  });
 }
 
-// ---------------- FREISCHALTEN ----------------
+// ---------------- FREISCHALTEN -----------------
 function unlockByReputation(){
  game.products.forEach(p=>{
   if(!p.unlocked && game.reputation>=p.unlockReputation){
@@ -274,7 +301,7 @@ function unlockByReputation(){
  });
 }
 
-// ---------------- AUTO ORDER ----------------
+// ---------------- AUTO ORDER -----------------
 el("autoOrder").onchange=e=>{game.autoOrder=e.target.checked; ui();}
 el("orderAmount").onchange=e=>{game.orderAmount=parseInt(e.target.value); ui();}
 el("reorderLimit").onchange=e=>{game.reorderLimit=parseInt(e.target.value); ui();}
@@ -294,7 +321,7 @@ function autoOrder(){
  });
 }
 
-// ---------------- TAG ----------------
+// ---------------- TAG -----------------
 function nextDay(){
  game.day++;
  game.income=0; game.expenses=0; game.report=[];
@@ -312,7 +339,7 @@ function nextDay(){
  ui();
 }
 
-// ---------------- ACHIEVEMENTS ----------------
+// ---------------- ACHIEVEMENTS -----------------
 function checkAchievements(){
  const ach = [];
  if(game.money>=1000) ach.push("💰 1000€ erreicht!");
@@ -331,14 +358,14 @@ function renderAchievements(){
  b.innerHTML = game.achievements.join("<br>");
 }
 
-// ---------------- REPORT ----------------
+// ---------------- REPORT -----------------
 function renderReport(){
  const b = el("report");
  if(game.report.length===0){b.textContent="Noch keine Daten"; return;}
  b.innerHTML = game.report.join("<br>");
 }
 
-// ---------------- ANIMATION ----------------
+// ---------------- ANIMATION -----------------
 function animateProduct(id){
  const divs=document.querySelectorAll(".product");
  divs.forEach(d=>{
@@ -349,7 +376,7 @@ function animateProduct(id){
  });
 }
 
-// ---------------- START ----------------
+// ---------------- START -----------------
 setInterval(nextDay,4000);
 ui();
 
