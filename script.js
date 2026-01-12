@@ -91,9 +91,9 @@ function ui(){
 // ---------------- PRODUKTE ----------------
 function priceState(p){
  let fair = p.buy*2*(1+p.level*0.2);
- if(p.sell<=fair*1.1) return "green";
- if(p.sell<=fair*1.4) return "yellow";
- return "red";
+ if(p.sell<=fair*1.1) return "green"; // günstig
+ if(p.sell<=fair*1.4) return "yellow"; // teuer
+ return "red"; // abzocke
 }
 
 function renderProducts(){
@@ -105,12 +105,12 @@ function renderProducts(){
   div.className="product";
   div.id=`product-${p.id}`;
   let color = priceState(p);
+  let colorSymbol = color==="green"?"🟢":color==="yellow"?"🟡":"🔴";
   div.innerHTML=`
    <b>${p.name}</b> | Lager: ${p.stock}<br>
-   Level ${p.level} | EK: ${formatMoney(p.buy)} | VK: <span id="price-${p.id}">${formatMoney(p.sell)}</span> 
+   Level ${p.level} | EK: ${formatMoney(p.buy)} | VK: <span id="price-${p.id}">${formatMoney(p.sell)}</span> ${colorSymbol}<br>
    <button class="price-btn" data-id="${p.id}" data-change="-0.1">-</button>
-   <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button>
-   <span class="${color}">●</span><br>
+   <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button><br>
    Rabatt: <span id="discount-${p.id}">${p.discount}</span>%
    <button class="discount-btn" data-id="${p.id}" data-change="-1">-</button>
    <button class="discount-btn" data-id="${p.id}" data-change="1">+</button><br>
@@ -130,14 +130,14 @@ function adjustPrice(id, amount){
  let p = game.products.find(x=>x.id===id);
  p.sell = Math.max(0.1,Math.round((p.sell+amount)*100)/100);
  updateProductUI(p);
- saveGame();
+ ui();
 }
 
 function adjustDiscount(id, amount){
  let p = game.products.find(x=>x.id===id);
  p.discount = Math.min(50,Math.max(0,p.discount+amount));
  updateProductUI(p);
- saveGame();
+ ui();
 }
 
 function updateProductUI(p){
@@ -163,16 +163,20 @@ function upgradeProduct(id){
 function toggleSelling(id){
  let p = game.products.find(x=>x.id===id);
  p.selling=!p.selling;
+ game.report.push(`${p.name} Verkauf ${p.selling?"aktiviert":"gestoppt"}`);
  ui();
 }
 
 // ---------------- Mitarbeiter ----------------
 el("hireBtn").onclick=()=>{
- if(game.xp<50) return;
- game.xp-=50;
+ let cost = 100;
+ if(game.money<cost) return;
+ game.money-=cost;
  game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
+ game.report.push(`👥 Neuer Mitarbeiter eingestellt für ${formatMoney(cost)}`);
  ui();
 };
+
 function renderStaff(){
  const b=el("staffList");
  b.innerHTML="";
@@ -188,6 +192,7 @@ function renderStaff(){
   b.appendChild(div);
  });
 }
+
 function upgradeStaff(id){
  let s = game.staff.find(x=>x.id===id);
  if(game.xp<s.level*10) return;
@@ -196,9 +201,12 @@ function upgradeStaff(id){
  game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert`);
  ui();
 }
+
 function fireStaff(id){
  let i = game.staff.findIndex(x=>x.id==id);
- if(i>=0) game.staff.splice(i,1); ui();
+ if(i>=0) game.staff.splice(i,1); 
+ game.report.push(`❌ Mitarbeiter entlassen`);
+ ui();
 }
 
 // ---------------- Kunden ----------------
