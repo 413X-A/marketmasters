@@ -4,7 +4,7 @@ const el=id=>document.getElementById(id);
 // ---------------- HILFSFUNKTIONEN ----------------
 function saveGame(){localStorage.setItem("retailEmpireSave",JSON.stringify(game));}
 function loadGame(){const d=localStorage.getItem("retailEmpireSave"); if(d) Object.assign(game,JSON.parse(d));}
-function formatMoney(amount){return amount.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";}
+function formatMoney(amount){return amount.toFixed(2).replace(".",",")+" €";}
 
 // ---------------- GAME ----------------
 window.game={};
@@ -90,7 +90,7 @@ function ui(){
 
 // ---------------- PRODUKTE ----------------
 function priceState(p){
- let fair=p.buy*2*(1+p.level*0.2);
+ let fair = p.buy*2*(1+p.level*0.2);
  if(p.sell<=fair*1.1) return "green";
  if(p.sell<=fair*1.4) return "yellow";
  return "red";
