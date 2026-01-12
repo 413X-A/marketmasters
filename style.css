@@ -1,0 +1,46 @@
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+  padding:10px;
+}
+
+h1,h2{color:#38bdf8}
+
+.top{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  background:#020617;
+  padding:10px;
+  border-radius:8px;
+}
+
+.product{
+  background:#020617;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+}
+
+.price-green{color:#22c55e}
+.price-yellow{color:#eab308}
+.price-red{color:#ef4444}
+
+button{
+  background:#2563eb;
+  border:none;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:disabled{
+  background:#374151;
+}
+
+#alerts p{
+  background:#7c2d12;
+  padding:6px;
+  border-radius:6px;
+}
