@@ -147,67 +147,87 @@ function updateProductUI(p){
  if(discountEl) discountEl.textContent=p.discount;
 }
 
-// ---------------- Upgrade Produkte ----------------
-function upgradeProduct(id){
- let p = game.products.find(x=>x.id===id);
- let cost = p.level*20; // XP-Kosten steigen pro Level
- if(game.xp<cost) return;
- game.xp-=cost;
- p.level++;
- p.sell = Math.round(p.sell*1.1*100)/100;
- game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert (VK erhöht)`);
- ui();
+// ---------------- Upgrade Produkt ----------------
+window.upgradeProduct = function(id){
+  const p = game.products.find(x=>x.id===id);
+  const cost = p.level*20; // XP-Kosten steigen pro Level
+  if(game.xp<cost){
+    alert("Nicht genug XP!");
+    return;
+  }
+  game.xp -= cost;
+  p.level++;
+  p.sell = Math.round(p.sell*1.1*100)/100; // VK steigt
+  game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert (VK erhöht)`);
+  ui();
 }
 
 // ---------------- Toggle Verkauf ----------------
-function toggleSelling(id){
- let p = game.products.find(x=>x.id===id);
- p.selling=!p.selling;
- game.report.push(`${p.name} Verkauf ${p.selling?"aktiviert":"gestoppt"}`);
- ui();
+window.toggleSelling = function(id){
+  const p = game.products.find(x=>x.id===id);
+  p.selling = !p.selling;
+  game.report.push(`${p.name} Verkauf ${p.selling?"aktiviert":"gestoppt"}`);
+  ui();
 }
 
-// ---------------- Mitarbeiter ----------------
-el("hireBtn").onclick=()=>{
- let cost = 100;
- if(game.money<cost) return;
- game.money-=cost;
- game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
- game.report.push(`👥 Neuer Mitarbeiter eingestellt für ${formatMoney(cost)}`);
- ui();
-};
+// ---------------- Upgrade Mitarbeiter ----------------
+ function renderStaff(){
+  const b = el("staffList");
+  b.innerHTML = "";
+  if(game.staff.length === 0){
+    b.textContent = "Keine Mitarbeiter";
+    return;
+  }
 
-function renderStaff(){
- const b=el("staffList");
- b.innerHTML="";
- if(game.staff.length===0){b.textContent="Keine Mitarbeiter";return;}
- game.staff.forEach(s=>{
-  let div=document.createElement("div");
-  div.className="product";
-  let salary = 10+s.level*5;
-  div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>
-   Lohn: ${formatMoney(salary)}
-   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*20} XP)</button>
-   <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
-  b.appendChild(div);
- });
+  game.staff.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "product";
+
+    let salary = 10 + s.level * 5;
+
+    // Infos als Text
+    const info = document.createElement("div");
+    info.innerHTML = `Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>Lohn: ${formatMoney(salary)}`;
+    div.appendChild(info);
+
+    // Upgrade Button
+    const upgradeBtn = document.createElement("button");
+    upgradeBtn.textContent = `Skillen (${s.level*20} XP)`;
+    upgradeBtn.addEventListener("click", () => upgradeStaff(s.id));
+    div.appendChild(upgradeBtn);
+
+    // Kündigen Button
+    const fireBtn = document.createElement("button");
+    fireBtn.textContent = "Kündigen";
+    fireBtn.className = "danger";
+    fireBtn.addEventListener("click", () => fireStaff(s.id));
+    div.appendChild(fireBtn);
+
+    b.appendChild(div);
+  });
 }
 
-function upgradeStaff(id){
- let s = game.staff.find(x=>x.id===id);
- let cost = s.level*20; // XP-Kosten steigen pro Level
- if(game.xp<cost) return;
- game.xp-=cost;
- s.level++; s.service++; s.sales++; s.logistics++;
- game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert`);
- ui();
+window.upgradeStaff = function(id){
+  const s = game.staff.find(x=>x.id===id);
+  const cost = s.level*20; // XP-Kosten steigen pro Level
+  if(game.xp<cost){
+    alert("Nicht genug XP!");
+    return;
+  }
+  game.xp -= cost;
+  s.level++; s.service++; s.sales++; s.logistics++;
+  game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert`);
+  ui();
 }
 
-function fireStaff(id){
- let i = game.staff.findIndex(x=>x.id==id);
- if(i>=0) game.staff.splice(i,1); 
- game.report.push(`❌ Mitarbeiter entlassen`);
- ui();
+// ---------------- Mitarbeiter Kündigen ----------------
+window.fireStaff = function(id){
+  const index = game.staff.findIndex(x=>x.id===id);
+  if(index>=0){
+    game.staff.splice(index,1);
+    game.report.push(`❌ Mitarbeiter entlassen`);
+    ui();
+  }
 }
 
 // ---------------- Kunden ----------------
