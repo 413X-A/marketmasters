@@ -4,7 +4,7 @@ const el=id=>document.getElementById(id);
 // ---------------- HILFSFUNKTIONEN ----------------
 function saveGame(){localStorage.setItem("retailEmpireSave",JSON.stringify(game));}
 function loadGame(){const d=localStorage.getItem("retailEmpireSave"); if(d) Object.assign(game,JSON.parse(d));}
-function formatMoney(amount){return amount.toLocaleString("de-DE",{minimumFractionDigits:0,maximumFractionDigits:0})+" €";}
+function formatMoney(amount){return amount.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";}
 
 // ---------------- GAME ----------------
 window.game={};
@@ -71,16 +71,16 @@ loadGame();
 // ---------------- UI ----------------
 function ui(){
  el("day").textContent=game.day;
- el("money").textContent=formatMoney(Math.floor(game.money));
+ el("money").textContent=formatMoney(Math.floor(game.money*100)/100);
  el("reputation").textContent=Math.floor(game.reputation);
  el("xp").textContent=Math.floor(game.xp);
  el("customers").textContent=Math.floor(game.customers);
  el("autoOrder").checked=game.autoOrder;
  el("orderAmount").value=game.orderAmount;
  el("reorderLimit").value=game.reorderLimit;
- el("income").textContent=formatMoney(Math.floor(game.income));
- el("expenses").textContent=formatMoney(Math.floor(game.expenses));
- el("profit").textContent=formatMoney(Math.floor(game.income-game.expenses));
+ el("income").textContent=formatMoney(Math.floor(game.income*100)/100);
+ el("expenses").textContent=formatMoney(Math.floor(game.expenses*100)/100);
+ el("profit").textContent=formatMoney(Math.floor((game.income-game.expenses)*100)/100);
  renderProducts();
  renderStaff();
  renderAchievements();
@@ -91,255 +91,194 @@ function ui(){
 // ---------------- PRODUKTE ----------------
 function priceState(p){
  let fair=p.buy*2*(1+p.level*0.2);
- if(p.sell< p.buy) return "red"; 
  if(p.sell<=fair*1.1) return "green";
  if(p.sell<=fair*1.4) return "yellow";
- return "orange"; 
-}
-
-function priceLabel(p){
- let fair=p.buy*2*(1+p.level*0.2);
- if(p.sell< p.buy) return "⚠ Unter EK";
- if(p.sell<=fair*1.1) return "Günstig";
- if(p.sell<=fair*1.4) return "Fair";
- if(p.sell<=fair*1.7) return "Teuer";
- return "Abzocke";
+ return "red";
 }
 
 function renderProducts(){
-  const box = el("productList");
-  box.innerHTML = "";
+ const box = el("productList");
+ box.innerHTML = "";
+ game.products.forEach(p=>{
+  if(!p.unlocked) return;
+  const div = document.createElement("div");
+  div.className="product";
+  div.id=`product-${p.id}`;
+  let color = priceState(p);
+  div.innerHTML=`
+   <b>${p.name}</b> | Lager: ${p.stock}<br>
+   Level ${p.level} | EK: ${formatMoney(p.buy)} | VK: <span id="price-${p.id}">${formatMoney(p.sell)}</span> 
+   <button class="price-btn" data-id="${p.id}" data-change="-0.1">-</button>
+   <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button>
+   <span class="${color}">●</span><br>
+   Rabatt: <span id="discount-${p.id}">${p.discount}</span>%
+   <button class="discount-btn" data-id="${p.id}" data-change="-1">-</button>
+   <button class="discount-btn" data-id="${p.id}" data-change="1">+</button><br>
+   <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
+   <button onclick="toggleSelling(${p.id})">${p.selling?"Stoppen":"Starten"}</button>
+  `;
+  box.appendChild(div);
+ });
 
-  game.products.forEach(p => {
-    if(!p.unlocked) return;
-
-    let div = document.createElement("div");
-    div.className = "product";
-    div.id = `product-${p.id}`;
-
-    let stateClass = priceState(p);
-    div.innerHTML = `
-      <b>${p.name}</b> | Lager: ${p.stock}<br>
-      Level ${p.level} | EK ${formatMoney(p.buy)} | VK: <span id="price-${p.id}">${formatMoney(p.sell)}</span>
-      <button class="price-btn" data-id="${p.id}" data-change="-0.1">-</button>
-      <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button>
-      <span class="${stateClass}" id="priceLabel-${p.id}">${priceLabel(p)}</span><br>
-
-      Rabatt: <span id="discount-${p.id}">${p.discount.toFixed(0)}</span>%
-      <button class="discount-btn" data-id="${p.id}" data-change="-1">-</button>
-      <button class="discount-btn" data-id="${p.id}" data-change="1">+</button><br>
-
-      <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
-      <button onclick="toggleSelling(${p.id})">${p.selling ? "Stoppen" : "Starten"}</button>
-      <br>XP pro Verkauf: ${p.level}
-    `;
-
-    box.appendChild(div);
-  });
-
-  document.querySelectorAll(".price-btn").forEach(btn=>{
-    btn.onclick = ()=>{
-      let id = parseInt(btn.dataset.id);
-      let change = parseFloat(btn.dataset.change);
-      adjustPrice(id, change);
-    }
-  });
-
-  document.querySelectorAll(".discount-btn").forEach(btn=>{
-    btn.onclick = ()=>{
-      let id = parseInt(btn.dataset.id);
-      let change = parseFloat(btn.dataset.change);
-      adjustDiscount(id, change);
-    }
-  });
+ document.querySelectorAll(".price-btn").forEach(btn=>{
+   btn.onclick=()=>{adjustPrice(parseInt(btn.dataset.id),parseFloat(btn.dataset.change))}});
+ document.querySelectorAll(".discount-btn").forEach(btn=>{
+   btn.onclick=()=>{adjustDiscount(parseInt(btn.dataset.id),parseFloat(btn.dataset.change))}});
 }
 
-window.adjustPrice = (id, amount) => {
-  let p = game.products.find(x=>x.id===id);
-  p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10);
-  updateProductUI(p);
-  saveGame();
+function adjustPrice(id, amount){
+ let p = game.products.find(x=>x.id===id);
+ p.sell = Math.max(0.1,Math.round((p.sell+amount)*100)/100);
+ updateProductUI(p);
+ saveGame();
 }
 
-window.adjustDiscount = (id, amount) => {
-  let p = game.products.find(x=>x.id===id);
-  p.discount = Math.min(50, Math.max(0, p.discount+amount));
-  updateProductUI(p);
-  saveGame();
+function adjustDiscount(id, amount){
+ let p = game.products.find(x=>x.id===id);
+ p.discount = Math.min(50,Math.max(0,p.discount+amount));
+ updateProductUI(p);
+ saveGame();
 }
 
 function updateProductUI(p){
-  let priceEl = document.getElementById(`price-${p.id}`);
-  let discountEl = document.getElementById(`discount-${p.id}`);
-  let labelEl = document.getElementById(`priceLabel-${p.id}`);
-
-  if(priceEl) priceEl.textContent = formatMoney(p.sell);
-  if(discountEl) discountEl.textContent = p.discount.toFixed(0);
-  if(labelEl) {
-    labelEl.textContent = priceLabel(p);
-    labelEl.className = priceState(p);
-  }
+ const priceEl = el(`price-${p.id}`);
+ const discountEl = el(`discount-${p.id}`);
+ if(priceEl) priceEl.textContent=formatMoney(p.sell);
+ if(discountEl) discountEl.textContent=p.discount;
 }
 
-// ---------------- Upgrade Produkt -----------------
+// ---------------- Upgrade ----------------
 function upgradeProduct(id){
  let p = game.products.find(x=>x.id===id);
  let cost = p.level*10;
  if(game.xp<cost) return;
- game.xp -= cost;
+ game.xp-=cost;
  p.level++;
- p.sell = Math.round(p.sell*1.1*10)/10; 
- p.exp +=5;
- game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert!`);
+ p.sell = Math.round(p.sell*1.1*100)/100;
+ game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert`);
  ui();
 }
 
-// ----------------- Toggle Verkauf -----------------
-window.toggleSelling = id=>{
+// ---------------- Toggle Verkaufen ----------------
+function toggleSelling(id){
  let p = game.products.find(x=>x.id===id);
- p.selling = !p.selling;
+ p.selling=!p.selling;
  ui();
 }
 
-// ---------------- MITARBEITER ----------------
+// ---------------- Mitarbeiter ----------------
 el("hireBtn").onclick=()=>{
  if(game.xp<50) return;
  game.xp-=50;
  game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
  ui();
 };
-
 function renderStaff(){
  const b=el("staffList");
  b.innerHTML="";
- if(game.staff.length===0){b.textContent="Keine Mitarbeiter"; return;}
+ if(game.staff.length===0){b.textContent="Keine Mitarbeiter";return;}
  game.staff.forEach(s=>{
   let div=document.createElement("div");
   div.className="product";
   let salary = 10+s.level*5;
   div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>
-  Lohn: ${formatMoney(salary)}
-  <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*10} XP)</button>
-  <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
+   Lohn: ${formatMoney(salary)}
+   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*10} XP)</button>
+   <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
   b.appendChild(div);
  });
 }
-
-window.upgradeStaff = id => {
- let s = game.staff.find(x => x.id===id);
- let cost = s.level*10;
- if(game.xp<cost) return;
- game.xp -= cost;
+function upgradeStaff(id){
+ let s = game.staff.find(x=>x.id===id);
+ if(game.xp<s.level*10) return;
+ game.xp-=s.level*10;
  s.level++; s.service++; s.sales++; s.logistics++;
- game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert!`);
+ game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert`);
  ui();
 }
-
-window.fireStaff=id=>{
- let i=game.staff.findIndex(x=>x.id==id);
- if(i>=0) game.staff.splice(i,1);
- ui();
+function fireStaff(id){
+ let i = game.staff.findIndex(x=>x.id==id);
+ if(i>=0) game.staff.splice(i,1); ui();
 }
 
-// ----------------- Kunden -----------------
+// ---------------- Kunden ----------------
 function calculateCustomers(){
  let base = Math.max(1,Math.floor(game.reputation/5));
  let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0 && p.selling).length;
-
- if(availableProducts===0){
-  game.reputation -= 0.5; 
- }
-
- let dayBoost = Math.min(game.day*0.1, base*2);
- let discountBoost = game.products.reduce((sum,p)=>sum+p.discount,0)/50;
- let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.05,0);
-
- return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost) * availableProducts / Math.max(1, game.products.filter(p=>p.unlocked).length);
+ if(availableProducts===0) game.reputation-=0.5;
+ let dayBoost = Math.min(game.day*0.1,base*2);
+ let discountBoost = game.products.reduce((s,p)=>s+p.discount,0)/50;
+ let staffBoost = game.staff.reduce((s,sf)=>s+sf.service*0.05,0);
+ return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost);
 }
 
-// ---------------- VERKAUF -----------------
+// ---------------- Verkauf ----------------
 function autoSell(){
- game.customers = calculateCustomers();
+ game.customers=calculateCustomers();
  let budgets=[];
  for(let i=0;i<game.customers;i++) budgets.push(20+Math.random()*50);
-
  game.products.forEach(p=>{
-  if(!p.selling || p.stock<=0) return;
-
+  if(!p.selling||p.stock<=0) return;
   budgets.forEach((budget,index)=>{
-   if(budget<=0 || p.stock<=0) return;
-
-   let maxBuy=Math.floor(budget/p.sell);
+   if(budget<=0||p.stock<=0) return;
+   let maxBuy = Math.floor(budget/(p.sell*(1-p.discount/100)));
    if(maxBuy<=0) return;
-
-   let demand=Math.min(maxBuy,Math.floor(Math.random()*3)+1);
+   let demand = Math.min(maxBuy,Math.floor(Math.random()*3)+1);
    demand = Math.min(demand,p.stock);
-
-   let revenue=demand*p.sell*(1-p.discount/100);
-   p.stock-=demand;
-   budgets[index]-=revenue;
+   let revenue = demand*p.sell*(1-p.discount/100);
+   p.stock-=demand; budgets[index]-=revenue;
    game.income+=revenue;
    game.xp+=demand*p.level;
    game.reputation+=0.01*demand;
-   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${formatMoney(revenue)}) | XP ${demand*p.level}`);
+   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${formatMoney(revenue)})`);
    animateProduct(p.id);
   });
  });
 }
 
-// ---------------- FREISCHALTEN -----------------
+// ---------------- Freischalten ----------------
 function unlockByReputation(){
  game.products.forEach(p=>{
   if(!p.unlocked && game.reputation>=p.unlockReputation){
-   p.unlocked=true;
-   p.stock=10;
+   p.unlocked=true; p.stock=10;
    game.report.push(`🔓 ${p.name} freigeschaltet`);
    animateProduct(p.id);
   }
  });
 }
 
-// ---------------- AUTO ORDER -----------------
+// ---------------- Auto Order ----------------
 el("autoOrder").onchange=e=>{game.autoOrder=e.target.checked; ui();}
 el("orderAmount").onchange=e=>{game.orderAmount=parseInt(e.target.value); ui();}
 el("reorderLimit").onchange=e=>{game.reorderLimit=parseInt(e.target.value); ui();}
-
 function autoOrder(){
  if(!game.autoOrder) return;
  game.products.forEach(p=>{
-  if(!p.unlocked || p.stock>=game.reorderLimit) return;
-  let cost=p.buy*game.orderAmount;
+  if(!p.unlocked||p.stock>=game.reorderLimit) return;
+  let cost = p.buy*game.orderAmount;
   if(game.money>=cost){
-   p.stock+=game.orderAmount;
-   game.money-=cost;
-   game.expenses+=cost;
+   p.stock+=game.orderAmount; game.money-=cost; game.expenses+=cost;
    game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${formatMoney(cost)})`);
    animateProduct(p.id);
   }
  });
 }
 
-// ---------------- TAG -----------------
+// ---------------- Tag ----------------
 function nextDay(){
- game.day++;
- game.income=0; game.expenses=0; game.report=[];
-
+ game.day++; game.income=0; game.expenses=0; game.report=[];
  autoOrder(); autoSell(); unlockByReputation();
-
- let staffCost=game.staff.reduce((s,x)=>s+10+x.level*5,0);
+ let staffCost = game.staff.reduce((s,x)=>s+10+x.level*5,0);
  game.expenses+=staffCost;
-
  game.money+=game.income-game.expenses;
-
  if(game.products.filter(p=>p.unlocked && p.stock>0).length===0) game.reputation-=1;
-
  checkAchievements();
  ui();
 }
 
-// ---------------- ACHIEVEMENTS -----------------
+// ---------------- Achievements ----------------
 function checkAchievements(){
- const ach = [];
+ const ach=[];
  if(game.money>=1000) ach.push("💰 1000€ erreicht!");
  if(game.money>=5000) ach.push("💰 5000€ erreicht!");
  if(game.reputation>=50) ach.push("⭐ Ruf 50!");
@@ -347,23 +286,14 @@ function checkAchievements(){
  if(game.xp>=500) ach.push("🎖 500 XP erreicht!");
  if(game.products.some(p=>p.level>=5)) ach.push("🛍 Produkt Level 5!");
  if(game.staff.length>=5) ach.push("👥 5 Mitarbeiter!");
- game.achievements = ach;
+ game.achievements=ach;
 }
+function renderAchievements(){const b=el("achievements"); if(game.achievements.length===0){b.textContent="Noch keine Achievements"; return;} b.innerHTML=game.achievements.join("<br>");}
 
-function renderAchievements(){
- const b = el("achievements");
- if(!game.achievements.length){b.textContent="Noch keine Achievements"; return;}
- b.innerHTML = game.achievements.join("<br>");
-}
+// ---------------- Report ----------------
+function renderReport(){const b=el("report"); if(game.report.length===0){b.textContent="Noch keine Daten"; return;} b.innerHTML=game.report.join("<br>");}
 
-// ---------------- REPORT -----------------
-function renderReport(){
- const b = el("report");
- if(!game.report.length){b.textContent="Noch keine Daten"; return;}
- b.innerHTML = game.report.join("<br>");
-}
-
-// ---------------- ANIMATION -----------------
+// ---------------- Animation ----------------
 function animateProduct(id){
  const divs=document.querySelectorAll(".product");
  divs.forEach(d=>{
@@ -374,7 +304,7 @@ function animateProduct(id){
  });
 }
 
-// ---------------- START -----------------
+// ---------------- START ----------------
 setInterval(nextDay,4000);
 ui();
 
