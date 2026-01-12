@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Retail Empire</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>🏪 Retail Empire</h1>
+<div class="top">
+  <div>Tag: <span id="day">1</span></div>
+  <div>💰 Geld: <span id="money">0</span>€</div>
+  <div>⭐ Ruf: <span id="reputation">0</span></div>
+  <div>😊 Zufriedenheit: <span id="satisfaction">0</span></div>
+  <div>👥 Kunden: <span id="customers">0</span></div>
+</div>
+
+<h2>Produkte</h2>
+<div id="productList"></div>
+
+<h2>Personal</h2>
+<button id="hireBtn">Mitarbeiter einstellen (300€)</button>
+<div id="staffList"></div>
+
+<h2>Lager</h2>
+<label>
+  <input type="checkbox" id="autoOrderChk"> Automatisch nachbestellen
+</label>
+<br>
+Bestellmenge:
+<select id="orderAmount">
+  <option>1</option>
+  <option>5</option>
+  <option selected>10</option>
+</select>
+
+<h2>Events</h2>
+<div id="eventBox"></div>
+
+<h2>Warnungen</h2>
+<div id="alerts"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
