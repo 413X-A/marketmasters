@@ -118,20 +118,11 @@ function renderProducts(){
   box.appendChild(div);
  });
 
- // VK & Rabatt Events
  document.querySelectorAll("[data-id]").forEach(i=>{
-  i.oninput=()=>{
-   let p=game.products.find(x=>x.id==i.dataset.id);
-   p.sell=parseFloat(i.value);
-   ui();
-  }
+  i.oninput=()=>{let p=game.products.find(x=>x.id==i.dataset.id); p.sell=parseFloat(i.value); ui();}
  });
  document.querySelectorAll("[data-discount]").forEach(i=>{
-  i.oninput=()=>{
-   let p=game.products.find(x=>x.id==i.dataset.discount);
-   p.discount=parseFloat(i.value)||0;
-   ui();
-  }
+  i.oninput=()=>{let p=game.products.find(x=>x.id==i.dataset.discount); p.discount=parseFloat(i.value)||0; ui();}
  });
 }
 
@@ -193,43 +184,48 @@ window.fireStaff=id=>{
 
 // ---------------- KUNDEN ----------------
 function calculateCustomers(){
- let base = 1 + Math.floor(game.reputation/5) + game.products.filter(p=>p.unlocked).length;
+ let base = Math.max(1, Math.floor(game.reputation/5) + game.products.filter(p=>p.unlocked).length);
+ let dayBoost = Math.min(game.day*0.1, base*2); // langsam wachsend
  let discountBoost = game.products.reduce((sum,p)=>sum+p.discount,0)/50;
  let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.1,0);
- let dayBoost = game.day*0.05;
  return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost);
 }
 
 // ---------------- VERKAUF ----------------
 function autoSell(){
  game.customers = calculateCustomers();
- let totalMoney = game.customers*50;
+
+ // Kunden kaufen langsam, jeder hat Budget 20-50€
+ let customerBudgets = [];
+ for(let i=0;i<game.customers;i++) customerBudgets.push(20 + Math.random()*30);
 
  game.products.forEach(p=>{
   if(!p.unlocked || p.stock<=0 || !p.selling) return;
 
-  let demand = Math.floor(Math.random()*3)+1;
-  demand = Math.min(demand*game.customers, p.stock);
+  customerBudgets.forEach((budget,index)=>{
+   if(budget<=0 || p.stock<=0) return;
 
-  let priceRatio = p.sell/(p.buy*2*(1+p.level*0.2));
-  if(priceRatio>1.4) demand = Math.floor(demand*0.5);
-  else if(priceRatio>1.1) demand = Math.floor(demand*0.8);
+   let maxBuy = Math.floor(budget/p.sell);
+   if(maxBuy<=0) return;
 
-  demand = Math.floor(demand*(1+p.discount/100));
-  let affordable = Math.min(demand, Math.floor(totalMoney/p.sell));
-  if(affordable<=0) return;
+   let demand = Math.min(maxBuy, Math.floor(Math.random()*3)+1); // max 1-3 pro Kunde
+   demand = Math.min(demand, p.stock);
 
-  let revenue = affordable * p.sell * (1-p.discount/100);
-  p.stock -= affordable;
-  totalMoney -= revenue;
+   let priceRatio = p.sell/(p.buy*2*(1+p.level*0.2));
+   if(priceRatio>1.4) demand = Math.floor(demand*0.5);
+   else if(priceRatio>1.1) demand = Math.floor(demand*0.8);
 
-  let xpGained = affordable*p.level;
-  game.xp += xpGained;
+   demand = Math.floor(demand*(1+p.discount/100));
+   if(demand<=0) return;
 
-  game.income += revenue;
-  game.report.push(`🛒 ${p.name}: ${affordable} verkauft (${Math.floor(revenue)}€) | XP ${xpGained}`);
-
-  animateProduct(p.id);
+   let revenue = demand*p.sell*(1-p.discount/100);
+   p.stock -= demand;
+   customerBudgets[index] -= revenue;
+   game.income += revenue;
+   game.xp += demand*p.level;
+   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${Math.floor(revenue)}€) | XP ${demand*p.level}`);
+   animateProduct(p.id);
+  });
  });
 }
 
@@ -259,7 +255,7 @@ function autoOrder(){
    p.stock += game.orderAmount;
    game.money -= cost;
    game.expenses += cost;
-   game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${cost}€)`);
+   game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${cost.toFixed(2)}€)`);
    animateProduct(p.id);
   }
  });
