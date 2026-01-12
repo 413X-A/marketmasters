@@ -2,44 +2,64 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Retail Empire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retail Empire Tycoon</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🏪 Retail Empire</h1>
-<div class="top">
-  <div>Tag: <span id="day">1</span></div>
-  <div>💰 Geld: <span id="money">0</span>€</div>
-  <div>⭐ Ruf: <span id="reputation">0</span></div>
-  <div>😊 Zufriedenheit: <span id="satisfaction">0</span></div>
-  <div>👥 Kunden: <span id="customers">0</span></div>
-</div>
+<header>
+  <h1>🏪 Retail Empire</h1>
+  <div class="stats">
+    <span>Tag <b id="day">1</b></span>
+    <span>💰 <b id="money">0</b>€</span>
+    <span>⭐ <b id="reputation">0</b></span>
+    <span>👥 <b id="customers">0</b></span>
+  </div>
+</header>
 
+<main>
+
+<section class="card">
 <h2>Produkte</h2>
 <div id="productList"></div>
+</section>
 
-<h2>Personal</h2>
-<button id="hireBtn">Mitarbeiter einstellen (300€)</button>
-<div id="staffList"></div>
-
+<section class="card">
 <h2>Lager</h2>
-<label>
-  <input type="checkbox" id="autoOrderChk"> Automatisch nachbestellen
+<label class="switch">
+<input type="checkbox" id="autoOrder">
+<span class="slider"></span>
 </label>
-<br>
-Bestellmenge:
+<span>Auto-Bestellung</span>
+
 <select id="orderAmount">
   <option>1</option>
   <option>5</option>
   <option selected>10</option>
+  <option>25</option>
 </select>
+</section>
 
+<section class="card">
+<h2>Mitarbeiter</h2>
+<button id="hireBtn">Mitarbeiter einstellen (300€)</button>
+<div id="staffList"></div>
+</section>
+
+<section class="card">
 <h2>Events</h2>
 <div id="eventBox"></div>
+</section>
 
+<section class="card">
 <h2>Warnungen</h2>
 <div id="alerts"></div>
+</section>
+
+</main>
+
+<div id="toast"></div>
 
 <script src="script.js"></script>
 </body>
