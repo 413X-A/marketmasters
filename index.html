@@ -28,8 +28,24 @@
 
 <section class="card">
 <h2>Lieferung</h2>
-<label><input type="checkbox" id="autoOrder"> Automatisch nachbestellen</label><br>
-Menge:
+<label>
+  <input type="checkbox" id="autoOrder">
+  Automatisch nachbestellen
+</label>
+
+<br><br>
+
+Nachbestellen wenn Lager unter:
+<select id="reorderLimit">
+  <option value="5">5</option>
+  <option value="10" selected>10</option>
+  <option value="25">25</option>
+  <option value="50">50</option>
+</select>
+
+<br><br>
+
+Bestellmenge:
 <select id="orderAmount">
   <option>1</option>
   <option>5</option>
@@ -47,6 +63,13 @@ Menge:
 <section class="card">
 <h2>Tagesbericht</h2>
 <div id="report"></div>
+</section>
+
+<section class="card">
+<h2>Finanzen</h2>
+<div>Einnahmen: <b id="income">0</b>€</div>
+<div>Ausgaben: <b id="expenses">0</b>€</div>
+<div>Bilanz: <b id="profit">0</b>€</div>
 </section>
 
 </main>
