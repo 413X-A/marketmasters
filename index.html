@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Retail Empire: Market Tycoon</title>
+<title>Retail Empire – Tycoon</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,7 +14,6 @@
     <span>Tag <b id="day">1</b></span>
     <span>💰 <b id="money">0</b>€</span>
     <span>⭐ <b id="reputation">0</b></span>
-    <span>😊 <b id="satisfaction">0</b></span>
     <span>👥 <b id="customers">0</b></span>
   </div>
 </header>
@@ -27,10 +26,18 @@
 </section>
 
 <section class="card">
-<h2>Lager & Einkauf</h2>
-<label><input type="checkbox" id="autoOrder"> Auto-Nachbestellung</label>
+<h2>Lager & Lieferung</h2>
+<label>
+  <input type="checkbox" id="autoOrder">
+  Automatisch nachbestellen
+</label>
+<br>
+Menge:
 <select id="orderAmount">
-  <option>1</option><option>5</option><option selected>10</option><option>25</option>
+  <option>1</option>
+  <option>5</option>
+  <option selected>10</option>
+  <option>25</option>
 </select>
 </section>
 
@@ -41,23 +48,14 @@
 </section>
 
 <section class="card">
-<h2>Marketing</h2>
-<button id="adBtn">Werbung schalten (200€)</button>
-</section>
-
-<section class="card">
-<h2>Events</h2>
-<div id="eventBox"></div>
-</section>
-
-<section class="card">
-<h2>Warnungen</h2>
-<div id="alerts"></div>
+<h2>Finanzen</h2>
+<div>Einnahmen heute: <b id="income">0</b>€</div>
+<div>Ausgaben heute: <b id="expenses">0</b>€</div>
+<div>Gewinn: <b id="profit">0</b>€</div>
 </section>
 
 </main>
 
-<div id="toast"></div>
 <script src="script.js"></script>
 </body>
 </html>
