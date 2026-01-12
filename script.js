@@ -110,11 +110,11 @@ function renderProducts(){
   box.innerHTML = "";
 
   game.products.forEach(p => {
-    if(!p.unlocked) return; // nur freigeschaltete Produkte
+    if(!p.unlocked) return;
 
     let div = document.createElement("div");
     div.className = "product";
-    div.id = `product-${p.id}`; // eindeutige ID
+    div.id = `product-${p.id}`;
 
     let stateClass = priceState(p);
     div.innerHTML = `
@@ -136,7 +136,6 @@ function renderProducts(){
     box.appendChild(div);
   });
 
-  // Event Listener binden
   document.querySelectorAll(".price-btn").forEach(btn=>{
     btn.onclick = ()=>{
       let id = parseInt(btn.dataset.id);
@@ -154,22 +153,20 @@ function renderProducts(){
   });
 }
 
-// ----------------- PREIS & RABATT -----------------
 window.adjustPrice = (id, amount) => {
-  let p = game.products.find(x => x.id===id);
+  let p = game.products.find(x=>x.id===id);
   p.sell = Math.max(0.1, Math.round((p.sell + amount)*10)/10);
   updateProductUI(p);
   saveGame();
 }
 
 window.adjustDiscount = (id, amount) => {
-  let p = game.products.find(x => x.id===id);
+  let p = game.products.find(x=>x.id===id);
   p.discount = Math.min(50, Math.max(0, p.discount+amount));
   updateProductUI(p);
   saveGame();
 }
 
-// ----------------- UI UPDATE -----------------
 function updateProductUI(p){
   let priceEl = document.getElementById(`price-${p.id}`);
   let discountEl = document.getElementById(`discount-${p.id}`);
@@ -183,7 +180,6 @@ function updateProductUI(p){
   }
 }
 
-// ---------------- Upgrade Produkt -----------------
 function upgradeProduct(id){
  let p = game.products.find(x=>x.id===id);
  let cost = p.level*10;
@@ -196,7 +192,6 @@ function upgradeProduct(id){
  ui();
 }
 
-// ----------------- Toggle Verkauf -----------------
 window.toggleSelling = id=>{
  let p = game.products.find(x=>x.id===id);
  p.selling = !p.selling;
@@ -205,8 +200,8 @@ window.toggleSelling = id=>{
 
 // ---------------- MITARBEITER ----------------
 el("hireBtn").onclick=()=>{
- if(game.money<100) return;
- game.money-=100;
+ if(game.xp<50) return;
+ game.xp-=50;
  game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
  ui();
 };
