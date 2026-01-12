@@ -37,7 +37,11 @@ function newGame(){
  {name:"T-Shirt",buy:8,sell:19,unlock:120,stock:0},
  {name:"Schuhe",buy:20,sell:59,unlock:150,stock:0},
  {name:"Smartphone",buy:180,sell:349,unlock:200,stock:0},
- {name:"Laptop",buy:450,sell:899,unlock:250,stock:0}
+ {name:"Laptop",buy:450,sell:899,unlock:250,stock:0},
+ {name:"Smoothie",buy:2.5,sell:5,unlock:60,stock:0},
+ {name:"Salat",buy:3,sell:7,unlock:80,stock:0},
+ {name:"Jeans",buy:25,sell:59,unlock:160,stock:0},
+ {name:"Sneakers",buy:50,sell:120,unlock:180,stock:0}
  ];
 
  productDB.forEach((p,i)=>{
@@ -84,46 +88,45 @@ function ui(){
 // ---------------- PRODUKTE ----------------
 function priceState(p){
  let fair=p.buy*2*(1+p.level*0.2);
+ if(p.sell< p.buy) return "red"; // Warnung unter EK
  if(p.sell<=fair*1.1) return "green";
  if(p.sell<=fair*1.4) return "yellow";
- return "red";
+ return "orange";
+}
+
+function priceLabel(p){
+ let fair=p.buy*2*(1+p.level*0.2);
+ if(p.sell< p.buy) return "⚠ Unter EK";
+ if(p.sell<=fair*1.1) return "Günstig";
+ if(p.sell<=fair*1.4) return "Fair";
+ if(p.sell<=fair*1.7) return "Teuer";
+ return "Abzocke";
 }
 
 function renderProducts(){
  const box=el("productList");
  box.innerHTML="";
  game.products.forEach(p=>{
+  if(!p.unlocked) return; // Nicht freigeschaltete Produkte nicht anzeigen
+
   let div=document.createElement("div");
   div.className="product";
 
-  if(!p.unlocked){
-   div.innerHTML=`<b>${p.name}</b><br>Freischaltung ab Ruf ${p.unlockReputation}`;
-   box.appendChild(div);
-   return;
-  }
-
-  let s=priceState(p);
-  let c=s==="green"?"price-green":s==="yellow"?"price-yellow":"price-red";
-
+  let c=priceState(p);
   div.innerHTML=`
    <b>${p.name}</b> | Lager ${p.stock}<br>
-   Level ${p.level} | EK ${p.buy} | VK: <input type="number" value="${p.sell}" data-id="${p.id}"> €
-   <button onclick="adjustPrice(${p.id},-0.5)">-</button>
-   <button onclick="adjustPrice(${p.id},0.5)">+</button>
-   <span class="${c}">●</span><br>
-   Rabatt: <input type="number" value="${p.discount}" min="0" max="50" data-discount="${p.id}"> %
+   Level ${p.level} | EK ${p.buy} | VK: ${p.sell.toFixed(2)} €
+   <button onclick="adjustPrice(${p.id},-0.1)">-</button>
+   <button onclick="adjustPrice(${p.id},0.1)">+</button>
+   <span class="${c}">${priceLabel(p)}</span><br>
+   Rabatt: ${p.discount.toFixed(0)}%
+   <button onclick="adjustDiscount(${p.id},-1)">-</button>
+   <button onclick="adjustDiscount(${p.id},1)">+</button>
    | <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
    | <button onclick="toggleSelling(${p.id})">${p.selling ? "Stoppen" : "Starten"}</button>
-   <br>XP pro Verkauf: ${p.level} 
+   <br>XP pro Verkauf: ${p.level}
   `;
   box.appendChild(div);
- });
-
- document.querySelectorAll("[data-id]").forEach(i=>{
-  i.oninput=()=>{let p=game.products.find(x=>x.id==i.dataset.id); p.sell=parseFloat(i.value); ui();}
- });
- document.querySelectorAll("[data-discount]").forEach(i=>{
-  i.oninput=()=>{let p=game.products.find(x=>x.id==i.dataset.discount); p.discount=parseFloat(i.value)||0; ui();}
  });
 }
 
@@ -133,27 +136,33 @@ function adjustPrice(id,amount){
  ui();
 }
 
+function adjustDiscount(id,amount){
+ let p=game.products.find(x=>x.id===id);
+ p.discount=Math.min(50,Math.max(0,p.discount+amount));
+ ui();
+}
+
 function upgradeProduct(id){
  let p=game.products.find(x=>x.id===id);
  let cost = p.level*10;
  if(game.xp<cost) return;
  game.xp -= cost;
  p.level++;
- p.sell *= 1.2;
- p.exp += 5;
+ p.sell*=1.1; // Upgrade erlaubt Preissteigerung
+ p.exp+=5;
  ui();
 }
 
 window.toggleSelling=id=>{
  let p=game.products.find(x=>x.id===id);
- p.selling = !p.selling;
+ p.selling=!p.selling;
  ui();
 }
 
 // ---------------- MITARBEITER ----------------
 el("hireBtn").onclick=()=>{
- if(game.xp<50) return;
- game.xp -= 50;
+ if(game.money<100) return;
+ game.money-=100;
  game.staff.push({id:Date.now(),level:1,service:1,sales:1,logistics:1});
  ui();
 };
@@ -165,8 +174,9 @@ function renderStaff(){
  game.staff.forEach(s=>{
   let div=document.createElement("div");
   div.className="product";
-  let salary = 20 + s.level*10;
-  div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>Lohn: ${salary}€/Tag<br>
+  let salary=10+s.level*5;
+  div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>
+  Lohn: ${salary}€/Tag
   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*10} XP)</button>
   <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
   b.appendChild(div);
@@ -174,14 +184,11 @@ function renderStaff(){
 }
 
 window.upgradeStaff=id=>{
- let s=game.staff.find(x=>x.id==id);
- let cost = s.level*10;
+ let s=game.staff.find(x=>x.id===id);
+ let cost=s.level*10;
  if(game.xp<cost) return;
- game.xp -= cost;
- s.level++;
- s.service++;
- s.sales++;
- s.logistics++;
+ game.xp-=cost;
+ s.level++; s.service++; s.sales++; s.logistics++;
  ui();
 }
 
@@ -193,46 +200,38 @@ window.fireStaff=id=>{
 
 // ---------------- KUNDEN ----------------
 function calculateCustomers(){
- let base = Math.max(1, Math.floor(game.reputation/5) + game.products.filter(p=>p.unlocked).length);
+ let base = Math.max(1,Math.floor(game.reputation/5) + game.products.filter(p=>p.unlocked).length);
  let dayBoost = Math.min(game.day*0.1, base*2);
  let discountBoost = game.products.reduce((sum,p)=>sum+p.discount,0)/50;
- let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.1,0);
+ let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.05,0);
  return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost);
 }
 
 // ---------------- VERKAUF ----------------
 function autoSell(){
- game.customers = calculateCustomers();
-
- // Kunden kaufen langsam, Budget 20-50€
- let customerBudgets = [];
- for(let i=0;i<game.customers;i++) customerBudgets.push(20 + Math.random()*30);
+ game.customers=calculateCustomers();
+ let budgets=[];
+ for(let i=0;i<game.customers;i++) budgets.push(20+Math.random()*50);
 
  game.products.forEach(p=>{
-  if(!p.unlocked || p.stock<=0 || !p.selling) return;
+  if(!p.selling || p.stock<=0) return;
 
-  customerBudgets.forEach((budget,index)=>{
+  budgets.forEach((budget,index)=>{
    if(budget<=0 || p.stock<=0) return;
 
-   let maxBuy = Math.floor(budget/p.sell);
+   let maxBuy=Math.floor(budget/p.sell);
    if(maxBuy<=0) return;
 
-   let demand = Math.min(maxBuy, Math.floor(Math.random()*3)+1);
-   demand = Math.min(demand, p.stock);
+   let demand=Math.min(maxBuy,Math.floor(Math.random()*3)+1);
+   demand=Math.min(demand,p.stock);
 
-   let priceRatio = p.sell/(p.buy*2*(1+p.level*0.2));
-   if(priceRatio>1.4) demand = Math.floor(demand*0.5);
-   else if(priceRatio>1.1) demand = Math.floor(demand*0.8);
-
-   demand = Math.floor(demand*(1+p.discount/100));
-   if(demand<=0) return;
-
-   let revenue = demand*p.sell*(1-p.discount/100);
-   p.stock -= demand;
-   customerBudgets[index] -= revenue;
-   game.income += revenue;
-   game.xp += demand*p.level;
-   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${Math.floor(revenue)}€) | XP ${demand*p.level}`);
+   let revenue=demand*p.sell*(1-p.discount/100);
+   p.stock-=demand;
+   budgets[index]-=revenue;
+   game.income+=revenue;
+   game.xp+=demand*p.level;
+   game.reputation+=0.01*demand;
+   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${revenue.toFixed(2)}€) | XP ${demand*p.level}`);
    animateProduct(p.id);
   });
  });
@@ -242,8 +241,8 @@ function autoSell(){
 function unlockByReputation(){
  game.products.forEach(p=>{
   if(!p.unlocked && game.reputation>=p.unlockReputation){
-   p.unlocked = true;
-   p.stock = 10;
+   p.unlocked=true;
+   p.stock=10;
    game.report.push(`🔓 ${p.name} freigeschaltet`);
    animateProduct(p.id);
   }
@@ -258,13 +257,12 @@ el("reorderLimit").onchange=e=>{game.reorderLimit=parseInt(e.target.value); ui()
 function autoOrder(){
  if(!game.autoOrder) return;
  game.products.forEach(p=>{
-  if(!p.unlocked) return;
-  if(p.stock>=game.reorderLimit) return;
-  let cost = p.buy*game.orderAmount;
+  if(!p.unlocked || p.stock>=game.reorderLimit) return;
+  let cost=p.buy*game.orderAmount;
   if(game.money>=cost){
-   p.stock += game.orderAmount;
-   game.money -= cost;
-   game.expenses += cost;
+   p.stock+=game.orderAmount;
+   game.money-=cost;
+   game.expenses+=cost;
    game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${cost.toFixed(2)}€)`);
    animateProduct(p.id);
   }
@@ -274,37 +272,33 @@ function autoOrder(){
 // ---------------- TAG ----------------
 function nextDay(){
  game.day++;
- game.income = 0;
- game.expenses = 0;
- game.report = [];
+ game.income=0; game.expenses=0; game.report=[];
 
- autoOrder();
- autoSell();
- unlockByReputation();
+ autoOrder(); autoSell(); unlockByReputation();
 
- let staffCost = game.staff.reduce((s,x)=>s+20+x.level*10,0);
- game.expenses += staffCost;
+ let staffCost=game.staff.reduce((s,x)=>s+10+x.level*5,0);
+ game.expenses+=staffCost;
 
- game.money += game.income - game.expenses;
+ game.money+=game.income-game.expenses;
 
- if(game.income - game.expenses > 0) game.reputation += 0.5;
- else game.reputation -= 0.3;
+ // Ruf sinkt, wenn kein Produkt zum Verkaufen
+ if(game.products.filter(p=>p.unlocked && p.stock>0).length===0) game.reputation-=1;
 
  ui();
 }
 
 // ---------------- REPORT ----------------
 function renderReport(){
- const b = el("report");
+ const b=el("report");
  if(game.report.length===0){b.textContent="Noch keine Daten"; return;}
- b.innerHTML = game.report.join("<br>");
+ b.innerHTML=game.report.join("<br>");
 }
 
 // ---------------- ANIMATION ----------------
 function animateProduct(id){
- const divs = document.querySelectorAll(".product");
+ const divs=document.querySelectorAll(".product");
  divs.forEach(d=>{
-  if(d.querySelector(`input[data-id="${id}"]`)){
+  if(d.querySelector(`button[onclick*="${id}"]`)){
    d.classList.add("sell-animation");
    setTimeout(()=>d.classList.remove("sell-animation"),400);
   }
