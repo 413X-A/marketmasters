@@ -92,7 +92,7 @@ function ui(){
 function priceState(p){
  let fair = p.buy*2*(1+p.level*0.2);
  if(p.sell<=fair*1.1) return "green"; // günstig
- if(p.sell<=fair*1.4) return "yellow"; // teuer
+ if(p.sell<=fair*1.4) return "yellow"; // fair/teuer
  return "red"; // abzocke
 }
 
@@ -114,7 +114,7 @@ function renderProducts(){
    Rabatt: <span id="discount-${p.id}">${p.discount}</span>%
    <button class="discount-btn" data-id="${p.id}" data-change="-1">-</button>
    <button class="discount-btn" data-id="${p.id}" data-change="1">+</button><br>
-   <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*10} XP)</button>
+   <button onclick="upgradeProduct(${p.id})">Upgrade (${p.level*20} XP)</button>
    <button onclick="toggleSelling(${p.id})">${p.selling?"Stoppen":"Starten"}</button>
   `;
   box.appendChild(div);
@@ -147,19 +147,19 @@ function updateProductUI(p){
  if(discountEl) discountEl.textContent=p.discount;
 }
 
-// ---------------- Upgrade ----------------
+// ---------------- Upgrade Produkte ----------------
 function upgradeProduct(id){
  let p = game.products.find(x=>x.id===id);
- let cost = p.level*10;
+ let cost = p.level*20; // XP-Kosten steigen pro Level
  if(game.xp<cost) return;
  game.xp-=cost;
  p.level++;
  p.sell = Math.round(p.sell*1.1*100)/100;
- game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert`);
+ game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert (VK erhöht)`);
  ui();
 }
 
-// ---------------- Toggle Verkaufen ----------------
+// ---------------- Toggle Verkauf ----------------
 function toggleSelling(id){
  let p = game.products.find(x=>x.id===id);
  p.selling=!p.selling;
@@ -187,7 +187,7 @@ function renderStaff(){
   let salary = 10+s.level*5;
   div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>
    Lohn: ${formatMoney(salary)}
-   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*10} XP)</button>
+   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*20} XP)</button>
    <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
   b.appendChild(div);
  });
@@ -195,8 +195,9 @@ function renderStaff(){
 
 function upgradeStaff(id){
  let s = game.staff.find(x=>x.id===id);
- if(game.xp<s.level*10) return;
- game.xp-=s.level*10;
+ let cost = s.level*20; // XP-Kosten steigen pro Level
+ if(game.xp<cost) return;
+ game.xp-=cost;
  s.level++; s.service++; s.sales++; s.logistics++;
  game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert`);
  ui();
