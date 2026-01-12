@@ -152,6 +152,7 @@ function upgradeProduct(id){
  p.level++;
  p.sell = Math.round(p.sell*1.1*10)/10; 
  p.exp +=5;
+ game.report.push(`⬆️ ${p.name} auf Level ${p.level} verbessert!`);
  ui();
 }
 
@@ -185,28 +186,36 @@ function renderStaff(){
  });
 }
 
-window.upgradeStaff=id=>{
- let s=game.staff.find(x=>x.id===id);
+window.upgradeStaff = id => {
+ let s = game.staff.find(x => x.id===id);
  let cost = s.level*10;
  if(game.xp<cost) return;
  game.xp -= cost;
  s.level++; s.service++; s.sales++; s.logistics++;
+ game.report.push(`⬆️ Mitarbeiter auf Level ${s.level} verbessert!`);
  ui();
 }
 
 window.fireStaff=id=>{
- let i=game.staff.findIndex(x=>x.id===id);
+ let i=game.staff.findIndex(x=>x.id==id);
  if(i>=0) game.staff.splice(i,1);
  ui();
 }
 
 // ---------------- KUNDEN ----------------
 function calculateCustomers(){
- let base = Math.max(1,Math.floor(game.reputation/5)+game.products.filter(p=>p.unlocked).length);
+ let base = Math.max(1,Math.floor(game.reputation/5));
+ let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0).length;
+
+ if(availableProducts===0){
+  game.reputation -= 0.5;
+ }
+
  let dayBoost = Math.min(game.day*0.1,base*2);
  let discountBoost = game.products.reduce((sum,p)=>sum+p.discount,0)/50;
  let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.05,0);
- return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost);
+
+ return Math.floor(base*(1+discountBoost+staffBoost)+dayBoost) * availableProducts / Math.max(1, game.products.filter(p=>p.unlocked).length);
 }
 
 // ---------------- VERKAUF ----------------
@@ -299,7 +308,6 @@ function checkAchievements(){
  if(game.xp>=500) ach.push("🎖 500 XP erreicht!");
  if(game.products.some(p=>p.level>=5)) ach.push("🛍 Produkt Level 5!");
  if(game.staff.length>=5) ach.push("👥 5 Mitarbeiter!");
-
  game.achievements = ach;
 }
 
