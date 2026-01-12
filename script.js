@@ -1,9 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
 const el=id=>document.getElementById(id);
 
-// ---------------- SAVE & LOAD ----------------
+// ---------------- HILFSFUNKTIONEN ----------------
 function saveGame(){localStorage.setItem("retailEmpireSave",JSON.stringify(game));}
 function loadGame(){const d=localStorage.getItem("retailEmpireSave"); if(d) Object.assign(game,JSON.parse(d));}
+function formatMoney(amount){return amount.toLocaleString("de-DE",{minimumFractionDigits:0,maximumFractionDigits:0})+" €";}
 
 // ---------------- GAME ----------------
 window.game={};
@@ -70,16 +71,16 @@ loadGame();
 // ---------------- UI ----------------
 function ui(){
  el("day").textContent=game.day;
- el("money").textContent=Math.floor(game.money);
+ el("money").textContent=formatMoney(Math.floor(game.money));
  el("reputation").textContent=Math.floor(game.reputation);
  el("xp").textContent=Math.floor(game.xp);
  el("customers").textContent=Math.floor(game.customers);
  el("autoOrder").checked=game.autoOrder;
  el("orderAmount").value=game.orderAmount;
  el("reorderLimit").value=game.reorderLimit;
- el("income").textContent=Math.floor(game.income);
- el("expenses").textContent=Math.floor(game.expenses);
- el("profit").textContent=Math.floor(game.income-game.expenses);
+ el("income").textContent=formatMoney(Math.floor(game.income));
+ el("expenses").textContent=formatMoney(Math.floor(game.expenses));
+ el("profit").textContent=formatMoney(Math.floor(game.income-game.expenses));
  renderProducts();
  renderStaff();
  renderAchievements();
@@ -119,7 +120,7 @@ function renderProducts(){
     let stateClass = priceState(p);
     div.innerHTML = `
       <b>${p.name}</b> | Lager: ${p.stock}<br>
-      Level ${p.level} | EK ${p.buy.toFixed(2)} € | VK: <span id="price-${p.id}">${p.sell.toFixed(2)}</span> €
+      Level ${p.level} | EK ${formatMoney(p.buy)} | VK: <span id="price-${p.id}">${formatMoney(p.sell)}</span>
       <button class="price-btn" data-id="${p.id}" data-change="-0.1">-</button>
       <button class="price-btn" data-id="${p.id}" data-change="0.1">+</button>
       <span class="${stateClass}" id="priceLabel-${p.id}">${priceLabel(p)}</span><br>
@@ -172,7 +173,7 @@ function updateProductUI(p){
   let discountEl = document.getElementById(`discount-${p.id}`);
   let labelEl = document.getElementById(`priceLabel-${p.id}`);
 
-  if(priceEl) priceEl.textContent = p.sell.toFixed(2);
+  if(priceEl) priceEl.textContent = formatMoney(p.sell);
   if(discountEl) discountEl.textContent = p.discount.toFixed(0);
   if(labelEl) {
     labelEl.textContent = priceLabel(p);
@@ -180,6 +181,7 @@ function updateProductUI(p){
   }
 }
 
+// ---------------- Upgrade Produkt -----------------
 function upgradeProduct(id){
  let p = game.products.find(x=>x.id===id);
  let cost = p.level*10;
@@ -192,6 +194,7 @@ function upgradeProduct(id){
  ui();
 }
 
+// ----------------- Toggle Verkauf -----------------
 window.toggleSelling = id=>{
  let p = game.products.find(x=>x.id===id);
  p.selling = !p.selling;
@@ -215,7 +218,7 @@ function renderStaff(){
   div.className="product";
   let salary = 10+s.level*5;
   div.innerHTML=`Level ${s.level} | 🛎${s.service} 💰${s.sales} 📦${s.logistics}<br>
-  Lohn: ${salary}€/Tag
+  Lohn: ${formatMoney(salary)}
   <button onclick="upgradeStaff(${s.id})">Skillen (${s.level*10} XP)</button>
   <button class="danger" onclick="fireStaff(${s.id})">Kündigen</button>`;
   b.appendChild(div);
@@ -241,13 +244,13 @@ window.fireStaff=id=>{
 // ----------------- Kunden -----------------
 function calculateCustomers(){
  let base = Math.max(1,Math.floor(game.reputation/5));
- let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0).length;
+ let availableProducts = game.products.filter(p=>p.unlocked && p.stock>0 && p.selling).length;
 
  if(availableProducts===0){
-  game.reputation -= 0.5;
+  game.reputation -= 0.5; 
  }
 
- let dayBoost = Math.min(game.day*0.1,base*2);
+ let dayBoost = Math.min(game.day*0.1, base*2);
  let discountBoost = game.products.reduce((sum,p)=>sum+p.discount,0)/50;
  let staffBoost = game.staff.reduce((sum,s)=>sum+s.service*0.05,0);
 
@@ -278,7 +281,7 @@ function autoSell(){
    game.income+=revenue;
    game.xp+=demand*p.level;
    game.reputation+=0.01*demand;
-   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${revenue.toFixed(2)}€) | XP ${demand*p.level}`);
+   game.report.push(`🛒 ${p.name}: ${demand} verkauft (${formatMoney(revenue)}) | XP ${demand*p.level}`);
    animateProduct(p.id);
   });
  });
@@ -310,7 +313,7 @@ function autoOrder(){
    p.stock+=game.orderAmount;
    game.money-=cost;
    game.expenses+=cost;
-   game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${cost.toFixed(2)}€)`);
+   game.report.push(`📦 ${p.name}: ${game.orderAmount} nachbestellt (${formatMoney(cost)})`);
    animateProduct(p.id);
   }
  });
@@ -349,14 +352,14 @@ function checkAchievements(){
 
 function renderAchievements(){
  const b = el("achievements");
- if(game.achievements.length===0){b.textContent="Noch keine Achievements"; return;}
+ if(!game.achievements.length){b.textContent="Noch keine Achievements"; return;}
  b.innerHTML = game.achievements.join("<br>");
 }
 
 // ---------------- REPORT -----------------
 function renderReport(){
  const b = el("report");
- if(game.report.length===0){b.textContent="Noch keine Daten"; return;}
+ if(!game.report.length){b.textContent="Noch keine Daten"; return;}
  b.innerHTML = game.report.join("<br>");
 }
 
